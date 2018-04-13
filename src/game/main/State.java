@@ -10,6 +10,11 @@ public enum State
 	flooded,
 	submerged;
 
+	@Override
+	/**
+	 * Returns a string indicating the state as
+	 * a capital letter.
+	 */
 	public String toString(){
 		switch (this){
 			case dry:

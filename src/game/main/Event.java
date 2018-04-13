@@ -13,6 +13,11 @@ public enum Event
 	Element_earth,
 	Element_air;
 
+	@Override
+	/**
+	 * Returns a string representing the event
+	 * as a capital letter.
+	 */
 	public String toString(){
 		switch (this){
 			case None:

@@ -1,6 +1,9 @@
 package game.main;
 
 
+import java.io.IOError;
+import java.io.IOException;
+
 /**
  * The class managing the game rules
  */
@@ -28,8 +31,49 @@ public class Game
 			p = new Player(this);
 	}
 
+	/**
+	 * Runs the game.
+	 */
+	public void runGame(){
+
+		boolean end = false;
+		boolean win = true;
+		int tour = 1;
+
+		while (!end) {
+
+			System.out.println("Tour " + tour);
+			tour++;
+
+			isle.floodCases(3); // flood 3 cases
+
+			// defeat check
+			boolean allSubmerged = true;
+			for (Case c: isle.cases){
+				if (c.state != State.submerged){
+					allSubmerged = false;
+					break;
+				}
+			}
+			if (allSubmerged)
+				end = true;
+
+			System.out.println(isle.toString());
+			waitForInput();
+		}
+	}
+
+	public void waitForInput(){
+		try {
+			System.in.read();
+		} catch (IOException e) {
+			System.err.println(e);
+		}
+	}
+
 	public static void main(String[] args){
-		Game game = new Game(10, 10, 2);
+		Game game = new Game(3, 3, 2);
+		game.runGame();
 	}
 }
 

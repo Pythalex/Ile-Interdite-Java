@@ -22,7 +22,7 @@ public class Case
 	public Ile isle;
 
 	/**
-	 * Creates a case on a given isle.
+	 * Creates a case on a given island.
 	 * Takes the case position on the grid
 	 * as argument.
 	 * 
@@ -36,6 +36,20 @@ public class Case
 		this.y = y;
 		this.state = State.dry; // default state
 		this.event = Event.None;  // default event
+	}
+
+	/**
+	 * Creates a case on a given island.
+	 * Same as first constructor but takes an
+	 * event as argument.
+	 * @param master The isle master
+	 * @param x		 The x position
+	 * @param y		 The y position
+	 * @param e		 The event on the case
+	 */
+	public Case(Ile master, int x, int y, Event e){
+		this(master, x, y);
+		this.event = e;
 	}
 
 	/**
@@ -61,6 +75,12 @@ public class Case
 		state = State.dry;
 	}
 
+	@Override
+	/**
+	 * Returns the case object in a string format:
+	 * (x, y)-state-event
+	 * where state and event are in toString format.
+	 */
 	public String toString(){
 		return String.format("(%d, %d)-%s-%s", x, y, state, event);
 	}
