@@ -1,7 +1,4 @@
-package game.model;
-
-import java.util.HashSet;
-import java.util.Set;
+package game.main;
 
 
 /**

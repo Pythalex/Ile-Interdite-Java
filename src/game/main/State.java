@@ -1,4 +1,4 @@
-package game.model;
+package game.main;
 
 /**
  * Represents the state of a case.
