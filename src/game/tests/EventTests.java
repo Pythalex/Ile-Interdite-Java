@@ -1,6 +1,6 @@
 package game.tests;
 
-import game.main.Event;
+import game.main.model.Event;
 
 import static org.junit.Assert.*;
 import org.junit.Test;

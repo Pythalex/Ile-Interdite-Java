@@ -1,7 +1,6 @@
-package game.main;
+package game.main.model;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -96,6 +95,21 @@ public class Ile
 			}
 		}
 
+	}
+
+	/**
+	 * Indicates whether the player can move to
+	 * (x, y).
+	 * If the position given is invalid, false is
+	 * returned.
+	 * @param x the target x position
+	 * @param y the target y position
+	 */
+	public boolean playerCanMove(int x, int y){
+		if (x < 0 || x > width || y < 0 || y > height)
+			return false;
+
+		return !cases[y * width + x].isSubmerged();
 	}
 
 	@Override

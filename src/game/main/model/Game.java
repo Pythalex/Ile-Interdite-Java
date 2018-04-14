@@ -1,7 +1,5 @@
-package game.main;
+package game.main.model;
 
-
-import java.io.IOError;
 import java.io.IOException;
 
 /**
@@ -27,8 +25,11 @@ public class Game
 	public Game(int width, int height, int nbOfPlayers){
 		isle = new Ile(this, width, height);
 		players = new Player[nbOfPlayers];
-		for (Player p: players)
-			p = new Player(this);
+		char name = 'A';
+		for (int i = 0; i < nbOfPlayers; i++) {
+			players[i] = new Player(this, "" + name);
+			name = (char)((int)name + 1);
+		}
 	}
 
 	/**
@@ -42,8 +43,13 @@ public class Game
 
 		while (!end) {
 
-			System.out.println("Tour " + tour);
+			System.out.println("Turn " + tour);
 			tour++;
+
+			for (Player p: players){
+				System.out.println("Player " + p.name + " has to play.");
+				makeAction(p);
+			}
 
 			isle.floodCases(3); // flood 3 cases
 
@@ -59,10 +65,30 @@ public class Game
 				end = true;
 
 			System.out.println(isle.toString());
+			System.out.println("Turn ended. Press input");
 			waitForInput();
+			System.out.println("Go for next turn.");
 		}
 	}
 
+	/**
+	 * Asks the player p to take action
+	 * @param p the player who is playing
+	 */
+	public void makeAction(Player p){
+		String action = p.takeAction();
+		System.out.println("Player " + p.name + " : " + action);
+
+		// end turn
+		if (action.equals("pass")){
+			return;
+		}
+	}
+
+	/**
+	 * DEBUG
+	 * Wait for user input to continue
+	 */
 	public void waitForInput(){
 		try {
 			System.in.read();

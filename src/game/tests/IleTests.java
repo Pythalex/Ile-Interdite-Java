@@ -1,7 +1,6 @@
 package game.tests;
 
-import game.main.Case;
-import game.main.Ile;
+import game.main.model.Ile;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -33,7 +32,6 @@ public class IleTests{
 
     @Test
     public void floodCasesTests(){
-        isle.initiateCases();
         // submerge case 4
         isle.cases[3].flood();
         isle.cases[3].flood();
@@ -48,6 +46,26 @@ public class IleTests{
         assertEquals(isle.toString(), "|(0, 0)-F-N|(1, 0)-F-N|\n" +
                         "--------------------\n" +
                         "|(0, 1)-F-N|(1, 1)-S-N|");
+    }
+
+    @Test
+    public void playerCanMoveTests(){
+        assertEquals(isle.playerCanMove(0, 0), true);
+        assertEquals(isle.playerCanMove(1, 0), true);
+        assertEquals(isle.playerCanMove(0, 1), true);
+        assertEquals(isle.playerCanMove(1, 1), true);
+
+        isle.cases[0].flood();
+        isle.cases[0].flood();
+        isle.cases[1].flood();
+
+        assertEquals(isle.playerCanMove(0, 0), false);
+        assertEquals(isle.playerCanMove(1, 0), true);
+        assertEquals(isle.playerCanMove(0, 1), true);
+        assertEquals(isle.playerCanMove(1, 1), true);
+
+        isle.cases[0].dry();
+        assertEquals(isle.playerCanMove(0, 0), true);
     }
 
 }

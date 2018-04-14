@@ -1,6 +1,6 @@
 package game.tests;
 
-import game.main.State;
+import game.main.model.State;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
