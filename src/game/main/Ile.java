@@ -12,9 +12,12 @@ public class Ile
 {
 	// Isle's grid width	
 	public int width;
-
 	// Isle's grid height
 	public int height;
+
+	// Some datas about the grid
+	public int numberOfCases     = 0; // width * height
+	public int numberOfSubmerged = 0;
 
 	// The grid's cases
 	public Case[] cases;
@@ -34,6 +37,7 @@ public class Ile
 		gameMaster = master;
 		this.width = width;
 		this.height = height;
+		this.numberOfCases = width * height;
 		this.cases = new Case[width * height];
 		initiateCases();
 	}
@@ -52,26 +56,46 @@ public class Ile
 
 	/**
 	 * Floods n cases where n has to be in [0, width*height]
+	 * Prioritizes the non-submerged cases.
 	 * @param n The number of cases to flood
 	 */
 	public void floodCases(int n) {
 
-		if (n < 0 || n > width*height)
+		if (n < 0 || n > numberOfCases)
 			return;
 
 		Random rdmGen = new Random();
 		List<Integer> chosen = new ArrayList<>();
+
+		boolean alreadyChosen;
+		boolean allSubmerged = numberOfSubmerged == numberOfCases;
+		boolean isSubmerged;
+
 		while (n > 0){
-			int rand = Math.abs(rdmGen.nextInt() % (width*height));
-			if (!chosen.contains(rand)) {
+
+			int rand = Math.abs(rdmGen.nextInt() % (numberOfCases));
+
+			// Prevent choosing the same case twice and
+			alreadyChosen = chosen.contains(rand);
+			// prioritized dry/flooded cases over submerged ones
+			isSubmerged   = cases[rand].isSubmerged();
+
+			if ( !( alreadyChosen || (isSubmerged && !allSubmerged) ) ) {
+
+				// the case is selected to flood
 				chosen.add(rand);
 				n--;
+
+				// the case is flooded
+				cases[rand].flood();
+				if (cases[rand].isSubmerged()) {
+					numberOfSubmerged++;
+					// update allSubmerged boolean
+					allSubmerged = numberOfSubmerged == numberOfCases;
+				}
 			}
 		}
 
-		for (int i: chosen){
-			cases[i].flood();
-		}
 	}
 
 	@Override

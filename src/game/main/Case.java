@@ -75,6 +75,24 @@ public class Case
 		state = State.dry;
 	}
 
+	/**
+	 * Indicates whether the case is dry.
+	 * @return state == dry
+	 */
+	public boolean isDry()		 { return state == State.dry; }
+
+	/**
+	 * Indicates whether the case is flooded.
+	 * @return state == flooded
+	 */
+	public boolean isFlooded() 	 { return state == State.flooded; }
+
+	/**
+	 * Indicates whether the case is submerged.
+	 * @return state == submerged
+	 */
+	public boolean isSubmerged() { return state == State.submerged; }
+
 	@Override
 	/**
 	 * Returns the case object in a string format:
