@@ -71,7 +71,7 @@ public class Player
 
 			if (!actionValid(action))
 				System.out.println("This action \"" +
-						action + "\" doesn't exist ! Please enter a valid action");
+						action + "\" doesn't exist or is invalid ! Please enter a valid action");
 		}
 
 		return action;
@@ -84,8 +84,11 @@ public class Player
 	 * @return action is valid ?
 	 */
 	public boolean actionValid(String action){
-		return (
-				action.equals("pass")
+		return (action.equals("pass") ||
+				action.equals("moveUp")    && gameMaster.isle.playerCanMove(x, y - 1) ||
+				action.equals("moveDown")  && gameMaster.isle.playerCanMove(x, y + 1) ||
+				action.equals("moveLeft")  && gameMaster.isle.playerCanMove(x - 1, y) ||
+				action.equals("moveRight") && gameMaster.isle.playerCanMove(x + 1, y)
 				);
 	}
 
