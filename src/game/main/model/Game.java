@@ -1,6 +1,10 @@
 package game.main.model;
 
+import game.main.view.CLInterface;
+import game.main.view.Interface;
+
 import java.io.IOException;
+import java.util.Random;
 
 /**
  * The class managing the game rules
@@ -14,6 +18,12 @@ public class Game
 	// List containing the players in the game
 	public Player[] players;
 
+	// The interface
+	public Interface intfc;
+
+	// obtainedKey
+	public boolean[] keys;
+
 	/**
 	 * Creates a game given the dimension width, height, and the
 	 * number of players.
@@ -23,13 +33,24 @@ public class Game
 	 * 	the game
 	 */
 	public Game(int width, int height, int nbOfPlayers){
+		// Create the isle
 		isle = new Ile(this, width, height);
+
+		// Create the players
 		players = new Player[nbOfPlayers];
 		char name = 'A';
 		for (int i = 0; i < nbOfPlayers; i++) {
 			players[i] = new Player(this, "" + name);
 			name = (char)((int)name + 1);
 		}
+
+		// The chosen interface
+		intfc = new CLInterface();
+
+		// the keys
+		keys = new boolean[4];
+		for (int i = 0; i < 4; i++)
+			keys[i] = false;
 	}
 
 	/**
@@ -41,11 +62,11 @@ public class Game
 		boolean win = true;
 		int tour = 1;
 
-		System.out.println(isle.toString());
+		intfc.displayState(isle);
 
 		while (!end) {
 
-			System.out.println("Turn " + tour);
+			intfc.displayMessage("Turn " + tour);
 			tour++;
 
 			// player turns
@@ -53,11 +74,16 @@ public class Game
 
 				printPlayersStates();
 
-				System.out.println("Player " + p.name + " has to play.");
+				intfc.displayMessage("Player " + p.name + " has to play.");
 
-				makeAction(p, 3); // 3 actions maximum
+				// 3 actions at max
+				makeAction(p, 3);
 
-				isle.floodCases(3); // flood 3 cases
+				// search for keys
+				searchKeys(p);
+
+				// flood 3 cases
+				isle.floodCases(3);
 
 				// defeat check
 				boolean allSubmerged = true;
@@ -70,12 +96,12 @@ public class Game
 				if (allSubmerged)
 					end = true;
 
-				System.out.println(isle.toString());
+				intfc.displayState(isle);
 			}
 
-			System.out.println("Turn ended. Press input");
+			intfc.displayMessage("Turn ended. Press input");
 			waitForInput();
-			System.out.println("Go for next turn.");
+			intfc.displayMessage("Go for next turn.");
 		}
 	}
 
@@ -86,30 +112,133 @@ public class Game
 	 */
 	public void makeAction(Player p, int actionLeft){
 
-		if (actionLeft <= 0)
-			return;
+		// While the player can do something
+		while (actionLeft > 0) {
 
-		String action = p.takeAction();
-		System.out.println("Player " + p.name + " : " + action);
+			// Get an action
+			String action = p.takeAction();
+			intfc.displayMessage("Player " + p.name + " : " + action);
 
-		// end turn
+			/*
+				If the action is valid, the game computes the result.
+				If it's not, the player is notified in testAction and
+				is asked an action again.
+			 */
+			if (testAction(action, p)) {
+
+				if (action.equals("pass")) {
+					return;
+				} else if (action.equals("moveup")) {
+					p.y--;
+				} else if (action.equals("movedown")) {
+					p.y++;
+				} else if (action.equals("moveleft")) {
+					p.x--;
+				} else if (action.equals("moveright")) {
+					p.x++;
+				} else if (action.equals("searchkey")) {
+
+				} else {
+					intfc.displayError(new Exception("Action " + action + " is invalid but passed " +
+							"the checks. Game will now shut down."));
+					System.exit(1);
+				}
+
+				actionLeft--;
+			}
+		}
+	}
+
+	/**
+	 * Checks whether the action is valid.
+	 * Displays a message if it isn't.
+	 * @param action the action to test
+	 * @param p the player taking the action
+	 * @return action is valid ?
+	 */
+	public boolean testAction(String action, Player p){
 		if (action.equals("pass")){
-			return;
+			return true;
 		}
-		else if (action.equals("moveUp")){
-			p.y--;
+		else if (action.equals("moveup")){
+			if (isle.playerCanMove(p.x, p.y - 1)) {
+				return true;
+			}
+			else {
+				intfc.displayMessage("You cannot move up.");
+				return false;
+			}
 		}
-		else if (action.equals("moveDown")){
-			p.y++;
+		else if (action.equals("movedown")){
+			if (isle.playerCanMove(p.x, p.y + 1)) {
+				return true;
+			}
+			else {
+				intfc.displayMessage("You cannot move down.");
+				return false;
+			}
 		}
-		else if (action.equals("moveLeft")){
-			p.x--;
+		else if (action.equals("moveleft")){
+			if (isle.playerCanMove(p.x - 1, p.y)) {
+				return true;
+			}
+			else {
+				intfc.displayMessage("You cannot move to the left.");
+				return false;
+			}
 		}
-		else if (action.equals("moveRight")) {
-			p.x++;
+		else if (action.equals("moveright")) {
+			if (isle.playerCanMove(p.x + 1, p.y)) {
+				return true;
+			}
+			else {
+				intfc.displayMessage("You cannot move to the right.");
+				return false;
+			}
+		} else {
+			intfc.displayMessage("Action not understood.");
+			return false;
 		}
+	}
 
-		makeAction(p, actionLeft - 1);
+	/**
+	 * Makes the player look for a key on his
+	 * current case.
+	 * @param p the player
+	 */
+	public void searchKeys(Player p){
+		// player position
+		int x = p.x;
+		int y = p.y;
+
+		// 1/3 change for all events
+		Random rdm = new Random();
+		int dice = rdm.nextInt(3);
+
+		switch (dice){
+			// find a key
+			case 0:
+				// choose a key which is not own by a player
+				int chosenKey = -1;
+				do {
+					chosenKey = rdm.nextInt(4);
+				} while(keys[chosenKey]);
+				keys[chosenKey] = true;
+				p.keys[chosenKey] = true;
+				String elm = (chosenKey == 0 ? "water" : (chosenKey == 1 ? "fire" : (chosenKey == 2 ? "earth" : "air")));
+				intfc.displayMessage("Player " + p.name + " found the " + elm + " key.");
+				break;
+			// find nothing
+			case 1:
+				intfc.displayMessage("Player " + p.name + " found nothing in the area.");
+				break;
+			// flood the case
+			default:
+				intfc.displayMessage("Damn ! Player " + p.name + " triggered a trap, water comes from " +
+					"nowhere and the entire area is suddenly flooded !");
+				isle.cases[p.y * isle.width + p.x].flood();
+				break;
+		}
 	}
 
 	/**
@@ -117,13 +246,8 @@ public class Game
 	 * position, keys, artifacts ...
 	 */
 	public void printPlayersStates(){
-		for (Player p: players){
-			System.out.println("Player " + p.name + "(" + p.x + "," + p.y + ") Keys : " +
-					(p.keys[0] ? "W-" : "") + (p.keys[1] ? "F-" : "") + (p.keys[2] ? "E-" : "") +
-					(p.keys[3] ? "A-" : "") + "  Artifacts : " +
-					(p.artifact[0] ? "W-" : "") + (p.artifact[1] ? "F-" : "") + (p.artifact[2] ? "E-" : "") +
-					(p.artifact[3] ? "A-" : ""));
-		}
+		for (Player p: players)
+			intfc.displayState(p);
 	}
 
 	/**
@@ -134,7 +258,7 @@ public class Game
 		try {
 			System.in.read();
 		} catch (IOException e) {
-			System.err.println(e);
+			intfc.displayError(e);
 		}
 	}
 

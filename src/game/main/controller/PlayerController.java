@@ -34,6 +34,6 @@ public class PlayerController {
     public String commandLineAction(){
         System.out.print("Player " + ID + ", your action : ");
         Scanner scan = new Scanner(System.in);
-        return scan.next();
+        return scan.next().toLowerCase();
     }
 }

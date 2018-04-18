@@ -24,7 +24,7 @@ The game modules are designed in 4 main modules:
 
 
 
-[![Ile_Interdite_Diagram.png](https://s14.postimg.cc/ezux4ppyp/Ile_Interdite_Diagram.png)](https://postimg.cc/image/4psi5h031/)
+[![Ile_Interdite_Diagram-2.png](https://s14.postimg.cc/ybyw216o1/Ile_Interdite_Diagram-2.png)](https://postimg.cc/image/6om6nxlh9/)
 
 
 

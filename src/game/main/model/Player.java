@@ -59,38 +59,12 @@ public class Player
 
 	/**
 	 * The player takes an action.
-	 * The action is guaranteed to be valid.
 	 * @return the action
 	 */
 	public String takeAction(){
-
-		String action = "undefined";
-
-		while (!actionValid(action)) {
-			action = pc.askAction();
-
-			if (!actionValid(action))
-				System.out.println("This action \"" +
-						action + "\" doesn't exist or is invalid ! Please enter a valid action");
-		}
-
-		return action;
+		return pc.askAction();
 	}
 
-	/**
-	 * Indicates whether the given action is
-	 * a valid action.
-	 * @param action the action to test
-	 * @return action is valid ?
-	 */
-	public boolean actionValid(String action){
-		return (action.equals("pass") ||
-				action.equals("moveUp")    && gameMaster.isle.playerCanMove(x, y - 1) ||
-				action.equals("moveDown")  && gameMaster.isle.playerCanMove(x, y + 1) ||
-				action.equals("moveLeft")  && gameMaster.isle.playerCanMove(x - 1, y) ||
-				action.equals("moveRight") && gameMaster.isle.playerCanMove(x + 1, y)
-				);
-	}
 
 	/**
 	 * Initiates boolean array items
