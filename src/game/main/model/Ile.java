@@ -112,6 +112,20 @@ public class Ile
 		return !cases[y * width + x].isSubmerged();
 	}
 
+	/**
+	 * Finds and returns the first case satisfying the
+	 * Event query. If nothing is found, returns null
+	 * @param e the event criteria.
+	 * @return the case's ref
+	 */
+	public Case foundCaseByEvent(Event e){
+		for (Case c: cases){
+			if (c.event == e)
+				return c;
+		}
+		return null;
+	}
+
 	@Override
 	/**
 	 * Returns a string representing the isle current state.

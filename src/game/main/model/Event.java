@@ -36,4 +36,26 @@ public enum Event
 				return "N/A";
 		}
 	}
+
+	/**
+	 * @return Returns the event name
+	 */
+	public String getName(){
+		switch (this){
+			case None:
+				return "None";
+			case Helicopter:
+				return "Helicopter";
+			case Element_water:
+				return "Water element";
+			case Element_fire:
+				return "Fire element";
+			case Element_earth:
+				return "Earth element";
+			case Element_air:
+				return "Air element";
+			default:
+				return "N/A";
+		}
+	}
 }
