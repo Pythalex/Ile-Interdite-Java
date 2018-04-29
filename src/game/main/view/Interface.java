@@ -3,11 +3,7 @@ package game.main.view;
 import game.main.model.Ile;
 import game.main.model.Player;
 
-public abstract class Interface {
-
-    public Interface(){
-
-    }
+public interface Interface {
 
     /**
      * Displays the given message.

@@ -1,6 +1,7 @@
 package game.main.model;
 
 import game.main.view.CLInterface;
+import game.main.view.GUInterface;
 import game.main.view.Interface;
 import javafx.util.Pair;
 
@@ -58,15 +59,17 @@ public class Game
 
 			players[i].x = helicopCase.x;
 			players[i].y = helicopCase.y;
-		}
 
-		// The chosen interface
-		intfc = new CLInterface();
+			helicopCase.players.add(players[i]);
+		}
 
 		// the keys
 		keys = new boolean[4];
 		for (int i = 0; i < 4; i++)
 			keys[i] = false;
+
+		// the interface
+		intfc = new GUInterface(this);
 	}
 
 	/**
@@ -219,13 +222,21 @@ public class Game
 				if (action.equals("pass")) {
 					return;
 				} else if (action.equals("moveup")) {
+					removePlayerRefFromCase(p);
 					p.y--;
+					addPlayerRefToCase(p);
 				} else if (action.equals("movedown")) {
+					removePlayerRefFromCase(p);
 					p.y++;
+					addPlayerRefToCase(p);
 				} else if (action.equals("moveleft")) {
+					removePlayerRefFromCase(p);
 					p.x--;
+					addPlayerRefToCase(p);
 				} else if (action.equals("moveright")) {
+					removePlayerRefFromCase(p);
 					p.x++;
+					addPlayerRefToCase(p);
 				} else if (action.equals("dry")){
 					getPlayerCase(p).dry();
 				} else if (action.equals("getartifact")) {
@@ -329,6 +340,22 @@ public class Game
 			intfc.displayMessage("Action not understood.");
 			return false;
 		}
+	}
+
+	/**
+	 * Adds the player reference to the case player list.
+	 * @param p the player
+	 */
+	public void removePlayerRefFromCase(Player p){
+		getPlayerCase(p).players.remove(p);
+	}
+
+	/**
+	 * Removes the player reference from the case player list.
+	 * @param p the player
+	 */
+	public void addPlayerRefToCase(Player p){
+		getPlayerCase(p).players.add(p);
 	}
 
 	/**
@@ -472,7 +499,23 @@ public class Game
 	}
 
 	public static void main(String[] args){
-		Game game = new Game(4, 4, 2);
+		int width = 4;
+		int height = 4;
+		int players = 2;
+
+		if (args.length == 4){
+			width = Integer.parseInt(args[1]);
+			height = Integer.parseInt(args[2]);
+			players = Integer.parseInt(args[3]);
+
+			if (width < 0 || width > 10 || height < 0 || height > 10 || players < 2 || players > 4){
+				System.err.println("USAGE: gamerunfile width height players\nwidth : [3, 10]\nheight : [3:10]\n" +
+								   "players : [2:4]");
+				System.exit(1);
+			}
+		}
+
+		Game game = new Game(width, height, players);
 		game.runGame();
 	}
 }

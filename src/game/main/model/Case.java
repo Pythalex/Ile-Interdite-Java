@@ -1,5 +1,8 @@
 package game.main.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a grid case
  * 
@@ -21,6 +24,9 @@ public class Case
 	// The isle on which the case is
 	public Ile isle;
 
+	// ref of player currently on the case
+	public List<Player> players;
+
 	/**
 	 * Creates a case on a given island.
 	 * Takes the case position on the grid
@@ -36,6 +42,7 @@ public class Case
 		this.y = y;
 		this.state = State.dry; // default state
 		this.event = Event.None;  // default event
+		players = new ArrayList<>();
 	}
 
 	/**

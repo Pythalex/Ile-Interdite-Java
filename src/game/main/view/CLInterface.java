@@ -3,7 +3,7 @@ package game.main.view;
 import game.main.model.Ile;
 import game.main.model.Player;
 
-public class CLInterface extends Interface {
+public class CLInterface implements Interface {
 
     public CLInterface(){
 
