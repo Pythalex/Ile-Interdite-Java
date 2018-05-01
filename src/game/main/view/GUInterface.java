@@ -15,7 +15,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
 
-public class GUInterface extends JPanel implements Interface{
+public class GUInterface extends JPanel implements Observer{
 
     /// ATTRIBUTES
 
@@ -72,18 +72,19 @@ public class GUInterface extends JPanel implements Interface{
 
     /// METHODS
 
-    @Override
     public void displayMessage(String msg){
         System.out.println(msg);
         repaint();
     }
 
-    @Override
+    /**
+     * Actually does nothing for the GUInterface, just repaints
+     * the panel.
+     */
     public void displayState(Ile isle){
         repaint();
     }
 
-    @Override
     public void displayState(Player p){
         playerPlaying = p;
         System.out.println("Player " + p.name + "(" + p.x + "," + p.y + ") Keys : " +
@@ -94,12 +95,22 @@ public class GUInterface extends JPanel implements Interface{
         repaint();
     }
 
-    @Override
     public void displayError(Exception err){
         System.err.println(err);
         repaint();
     }
 
+    @Override
+    public void update(){
+        repaint();
+    }
+
+    /// DRAW METHODS
+
+    /**
+     * Draws the isle's cases' states and event.
+     * @param g the panel graphics
+     */
     public void drawCases(Graphics g){
 
         Ile isle = master.isle;
@@ -152,6 +163,10 @@ public class GUInterface extends JPanel implements Interface{
         }
     }
 
+    /**
+     * Draws the isle's grid.
+     * @param g the panel graphics
+     */
     public void drawGrid(Graphics g){
 
         Ile isle = master.isle;
@@ -167,11 +182,19 @@ public class GUInterface extends JPanel implements Interface{
             g.drawLine(0, row * rowWidth, getWidth() - 1, row * rowWidth);
     }
 
+    /**
+     * Draws the isle's grid and the cases' states and event.
+     * @param g the panel graphics
+     */
     public void drawIsle(Graphics g){
         drawCases(g);
         drawGrid(g);
     }
 
+    /**
+     * Draws the players at their position.
+     * @param g the panel graphics
+     */
     public void drawPlayers(Graphics g){
 
         Ile isle = master.isle;
@@ -243,11 +266,19 @@ public class GUInterface extends JPanel implements Interface{
         }
     }
 
+    /**
+     * Clear the panel with white.
+     * @param g the panel graphics
+     */
     public void clear(Graphics g){
         g.setColor(Color.white);
         g.fillRect(0, 0, getWidth() - 1, getHeight() - 1);
     }
 
+    /**
+     * Draws everything.
+     * @param g the panel graphics
+     */
     public void paintComponent(Graphics g){
         clear(g);
         drawIsle(g);

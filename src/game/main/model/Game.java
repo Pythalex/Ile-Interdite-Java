@@ -1,31 +1,31 @@
 package game.main.model;
 
-import game.main.view.CLInterface;
+// interfaces
 import game.main.view.GUInterface;
 import game.main.view.Interface;
-import javafx.util.Pair;
 
-import javax.lang.model.type.ArrayType;
-import java.io.IOException;
+// used for random position generation
+import javafx.util.Pair;
+import java.util.Random;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
+
+// used for image loading
+import java.io.IOException;
 
 /**
  * The class managing the game rules
  */
 
-public class Game
+public class Game extends Observable
 {
 	// The game's isle
 	public Ile isle;
 
 	// List containing the players in the game
 	public Player[] players;
-
-	// The interface
-	public Interface intfc;
 
 	// obtainedKey
 	public boolean[] keys;
@@ -69,7 +69,8 @@ public class Game
 			keys[i] = false;
 
 		// the interface
-		intfc = new GUInterface(this);
+		addObserver(new GUInterface(this));
+		notifyObservers();
 	}
 
 	/**
@@ -112,8 +113,6 @@ public class Game
 		boolean win = false;
 		int tour = 1;
 
-		intfc.displayState(isle);
-
 		Case heliport = isle.foundCaseByEvent(Event.Helicopter);
 		Case elementWater = isle.foundCaseByEvent(Event.Element_water);
 		Case elementFire = isle.foundCaseByEvent(Event.Element_fire);
@@ -123,7 +122,7 @@ public class Game
 
 		while (!end) {
 
-			intfc.displayMessage("Turn " + tour);
+			System.out.println("Turn " + tour);
 			tour++;
 
 			// player turns
@@ -133,9 +132,7 @@ public class Game
 				if (end)
 					break;
 
-				printPlayersStates();
-
-				intfc.displayMessage("Player " + p.name + " has to play.");
+				System.out.println("Player " + p.name + " has to play.");
 
 				// 3 actions at max
 				makeAction(p, 3);
@@ -146,29 +143,26 @@ public class Game
 				// flood 3 cases
 				isle.floodCases(3);
 
-				// Update the view state
-				intfc.displayState(isle);
-
 				/* DEFEAT CHECKS */
 
 				// if one player is on a submerged case, he's dead and the game is finished
 				Player submergedPlayer = checkSubmergedPlayer();
 				if (submergedPlayer != null) {
 					end = true;
-					intfc.displayMessage("Player " + submergedPlayer.name + " drowned.");
+					System.out.println("Player " + submergedPlayer.name + " drowned.");
 				}
 
 				// If the helicopter is submerged, the game is finished
 				if (heliport.isSubmerged()){
 					end = true;
-					intfc.displayMessage("The helicopter got submerged, the players are trap on the island !");
+					System.out.println("The helicopter got submerged, the players are trap on the island !");
 				}
 
 				// If any artifact is submerged, the game is finished
 				for (Case artifact: elementsCases){
 					if (artifact.isSubmerged()){
 						end = true;
-						intfc.displayMessage("The " + artifact.event.getName() +
+						System.out.println("The " + artifact.event.getName() +
 								" got submerged, the players lose !");
 						break;
 					}
@@ -179,13 +173,19 @@ public class Game
 					end = true;
 					win = true;
 				}
+
+				// update view
+				notifyObservers();
 			}
+
+			// update view
+			notifyObservers();
 
 			// Next turn
 			if (!end) {
-				intfc.displayMessage("Turn ended. Press input");
+				System.out.println("Turn ended. Press input");
 				waitForInput();
-				intfc.displayMessage("Go for next turn.");
+				System.out.println("Go for next turn.");
 			}
 		}
 
@@ -210,7 +210,7 @@ public class Game
 
 			// Get an action
 			String action = p.takeAction();
-			intfc.displayMessage("Player " + p.name + " : " + action);
+			System.out.println("Player " + p.name + " : " + action);
 
 			/*
 				If the action is valid, the game computes the result.
@@ -244,14 +244,18 @@ public class Game
 					Case c = getPlayerCase(p);
 					// give artifact
 					p.artifact[artifacts.indexOf(c.event)] = true;
+					// remove artifact from the case
+					c.event = Event.None;
 				} else {
-					intfc.displayError(new Exception("Action " + action + " is invalid but passed " +
-							"the checks. Game will now shut down."));
+					System.err.println("Action " + action + " is invalid but passed " +
+							"the checks. Game will now shut down.");
 					System.exit(1);
 				}
 
 				actionLeft--;
 			}
+
+			notifyObservers();
 		}
 	}
 
@@ -274,7 +278,7 @@ public class Game
 				return true;
 			}
 			else {
-				intfc.displayMessage("You cannot move up.");
+				System.out.println("You cannot move up.");
 				return false;
 			}
 		}
@@ -283,7 +287,7 @@ public class Game
 				return true;
 			}
 			else {
-				intfc.displayMessage("You cannot move down.");
+				System.out.println("You cannot move down.");
 				return false;
 			}
 		}
@@ -292,7 +296,7 @@ public class Game
 				return true;
 			}
 			else {
-				intfc.displayMessage("You cannot move to the left.");
+				System.out.println("You cannot move to the left.");
 				return false;
 			}
 		}
@@ -301,15 +305,15 @@ public class Game
 				return true;
 			}
 			else {
-				intfc.displayMessage("You cannot move to the right.");
+				System.out.println("You cannot move to the right.");
 				return false;
 			}
 		} else if (action.equals("dry")) {
 			if (c.isDry()){
-				intfc.displayMessage("Your current case is already dry.");
+				System.out.println("Your current case is already dry.");
 				return false;
 			} else if (c.isSubmerged()){
-				intfc.displayMessage("Your current case is submerged.");
+				System.out.println("Your current case is submerged.");
 				return false;
 			} else {
 				return true;
@@ -326,18 +330,18 @@ public class Game
 				int index = artifacts.indexOf(caseEvent);
 				// Player has the key ?
 				if (p.keys[index]){
-					intfc.displayMessage("Player " + p.name + " got the " + caseEvent.getName());
+					System.out.println("Player " + p.name + " got the " + caseEvent.getName());
 					return true;
 				} else {
-					intfc.displayMessage("You don't have the " + caseEvent.getName() + " key.");
+					System.out.println("You don't have the " + caseEvent.getName() + " key.");
 				}
 			} else {
-				intfc.displayMessage("There is no artifact on your current case.");
+				System.out.println("There is no artifact on your current case.");
 			}
 
 			return false;
 		} else {
-			intfc.displayMessage("Action not understood.");
+			System.out.println("Action not understood.");
 			return false;
 		}
 	}
@@ -383,15 +387,15 @@ public class Game
 				keys[chosenKey] = true;
 				p.keys[chosenKey] = true;
 				String elm = (chosenKey == 0 ? "water" : (chosenKey == 1 ? "fire" : (chosenKey == 2 ? "earth" : "air")));
-				intfc.displayMessage("Player " + p.name + " found the " + elm + " key.");
+				System.out.println("Player " + p.name + " found the " + elm + " key.");
 				break;
 			// find nothing
 			case 1:
-				intfc.displayMessage("Player " + p.name + " found nothing in the area.");
+				System.out.println("Player " + p.name + " found nothing in the area.");
 				break;
 			// flood the case
 			default:
-				intfc.displayMessage("Damn ! Player " + p.name + " triggered a trap, water comes from " +
+				System.out.println("Damn ! Player " + p.name + " triggered a trap, water comes from " +
 					"nowhere and the entire area is suddenly flooded !");
 				getPlayerCase(p).flood();
 				break;
@@ -478,15 +482,6 @@ public class Game
 	}
 
 	/**
-	 * Prints the players state, i.e. their
-	 * position, keys, artifacts ...
-	 */
-	public void printPlayersStates(){
-		for (Player p: players)
-			intfc.displayState(p);
-	}
-
-	/**
 	 * DEBUG
 	 * Wait for user input to continue
 	 */
@@ -494,7 +489,7 @@ public class Game
 		try {
 			System.in.read();
 		} catch (IOException e) {
-			intfc.displayError(e);
+			System.err.println(e);
 		}
 	}
 
