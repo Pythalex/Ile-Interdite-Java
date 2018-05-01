@@ -2,7 +2,6 @@ package game.main.model;
 
 // interfaces
 import game.main.view.GUInterface;
-import game.main.view.Interface;
 
 // used for random position generation
 import javafx.util.Pair;

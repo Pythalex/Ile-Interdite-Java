@@ -23,9 +23,7 @@
 The game modules are designed in 4 main modules:
 
 
-
-[![Ile_Interdite_Diagram-2.png](https://s14.postimg.cc/ybyw216o1/Ile_Interdite_Diagram-2.png)](https://postimg.cc/image/6om6nxlh9/)
-
+[![Ile_Interdite-_UML.png](https://s14.postimg.cc/uhn5ko04h/Ile_Interdite-_UML.png)](https://postimg.cc/image/pizn64wbh/)
 
 
 Game manages the game's rules and has references of the players and the isle.

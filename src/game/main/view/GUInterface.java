@@ -71,35 +71,6 @@ public class GUInterface extends JPanel implements Observer{
     }
 
     /// METHODS
-
-    public void displayMessage(String msg){
-        System.out.println(msg);
-        repaint();
-    }
-
-    /**
-     * Actually does nothing for the GUInterface, just repaints
-     * the panel.
-     */
-    public void displayState(Ile isle){
-        repaint();
-    }
-
-    public void displayState(Player p){
-        playerPlaying = p;
-        System.out.println("Player " + p.name + "(" + p.x + "," + p.y + ") Keys : " +
-                (p.keys[0] ? "W-" : "") + (p.keys[1] ? "F-" : "") + (p.keys[2] ? "E-" : "") +
-                (p.keys[3] ? "A-" : "") + "  Artifacts : " +
-                (p.artifact[0] ? "W-" : "") + (p.artifact[1] ? "F-" : "") + (p.artifact[2] ? "E-" : "") +
-                (p.artifact[3] ? "A-" : ""));
-        repaint();
-    }
-
-    public void displayError(Exception err){
-        System.err.println(err);
-        repaint();
-    }
-
     @Override
     public void update(){
         repaint();
