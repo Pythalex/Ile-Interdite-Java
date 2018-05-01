@@ -1,5 +1,6 @@
 package game.main.view;
 
+import game.main.controller.PlayerController;
 import game.main.model.Case;
 import game.main.model.Game;
 import game.main.model.Ile;
@@ -7,10 +8,9 @@ import game.main.model.Player;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
@@ -22,8 +22,9 @@ public class GUInterface extends JPanel implements Observer{
     private Game master;
 
     private JFrame window;
-
-    private Player playerPlaying;
+    private JTextArea textArea;
+    private JScrollPane textAreaScroller;
+    private String text;
 
     // resources
     private Color colorCaseStroke = Color.BLACK;
@@ -46,14 +47,148 @@ public class GUInterface extends JPanel implements Observer{
 
         int size = 700;
 
-        setPreferredSize(new Dimension(size, size));
-
         window = new JFrame("Ile Interdite");
 
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window.getContentPane().add(this);
+        // will define the grid settings for the widgets placements.
+        GridBagConstraints gridRules = new GridBagConstraints();
 
+        // ---------- Game canvas -------------------------
+
+        window.setLayout(new GridBagLayout());
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        gridRules.gridx = 0;
+        gridRules.gridy = 0;
+
+        window.add(this, gridRules);
+
+        setPreferredSize(new Dimension(size, size));
         setSize(window.getHeight(), window.getHeight());
+
+        // ---------- Buttons and text --------------------
+
+        JPanel UIContainer = new JPanel();
+        UIContainer.setLayout(new GridLayout(2, 1, 0, 100));
+
+        // buttons
+
+        JPanel buttonContainer = new JPanel();
+        buttonContainer.setLayout(new GridBagLayout());
+
+        GridBagConstraints buttonRules = new GridBagConstraints();
+        // button padding
+        buttonRules.ipadx = 5;
+        buttonRules.ipady = 15;
+
+        // distribute space
+        buttonRules.weightx = 1.0;
+        buttonRules.weighty = 1.0;
+
+        // move up
+        buttonRules.gridx = 1;
+        buttonRules.gridy = 0;
+        JButton upButton = new JButton("Up");
+        // can't give a function callback directly, must use this annoying workaround
+        upButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "moveup";
+            }
+        });
+        buttonContainer.add(upButton, buttonRules);
+
+        // move left
+        buttonRules.gridx = 0;
+        buttonRules.gridy = 1;
+        JButton leftButton = new JButton("Left");
+        leftButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "moveleft";
+            }
+        });
+        buttonContainer.add(leftButton, buttonRules);
+
+        // move right
+        buttonRules.gridx = 2;
+        buttonRules.gridy = 1;
+        JButton rightButton = new JButton("Right");
+        rightButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "moveright";
+            }
+        });
+        buttonContainer.add(rightButton, buttonRules);
+
+        // move down
+        buttonRules.gridx = 1;
+        buttonRules.gridy = 2;
+        JButton downButton = new JButton("Down");
+        downButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "movedown";
+            }
+        });
+        buttonContainer.add(downButton, buttonRules);
+
+        // pass
+        buttonRules.gridx = 1;
+        buttonRules.gridy = 4;
+        JButton passButton = new JButton("Pass");
+        passButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "pass";
+            }
+        });
+        buttonContainer.add(passButton, buttonRules);
+
+        // dry
+        buttonRules.gridx = 0;
+        buttonRules.gridy = 4;
+        JButton dryButton = new JButton("Dry");
+        dryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "dry";
+            }
+        });
+        buttonContainer.add(dryButton, buttonRules);
+
+        // get artifact
+        buttonRules.gridx = 2;
+        buttonRules.gridy = 4;
+        JButton artifactButton = new JButton("Artifact");
+        artifactButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "getartifact";
+            }
+        });
+        buttonContainer.add(artifactButton, buttonRules);
+
+        UIContainer.add(buttonContainer);
+
+        // text
+
+        textArea = new JTextArea(15, 25);
+        textArea.setEditable(false);
+        // makes auto new line if lines are too long
+        textArea.setLineWrap(true);
+
+        textAreaScroller = new JScrollPane(textArea);
+
+        // add the scrollpane to the screen container
+        UIContainer.add(textAreaScroller);
+
+        gridRules.gridx = 1;
+        gridRules.gridy = 0;
+
+        window.add(UIContainer, gridRules);
+
+        // ------------ Tweaks ----------------------------
 
         window.setVisible(true);
         window.setResizable(false);
@@ -74,6 +209,21 @@ public class GUInterface extends JPanel implements Observer{
     @Override
     public void update(){
         repaint();
+    }
+
+    /**
+     * Displays the message to the screen.
+     * @param msg the message to display
+     */
+    public void message(String msg){
+        text = msg;
+        textArea.append(msg + "\n");
+        // this makes the text area auto scroll when filled
+        textArea.setCaretPosition(textArea.getDocument().getLength());
+    }
+
+    public void autoScrollAtTextAreaEnd(){
+
     }
 
     /// DRAW METHODS

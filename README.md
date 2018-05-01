@@ -8,7 +8,7 @@
 
 
 
-![alt text](http://www.cyberfab.fr/gfx/lile_interdite/lile_interdite.jpg)
+![Forbidden Island game's box](http://www.cyberfab.fr/gfx/lile_interdite/lile_interdite.jpg)
 
 
 
@@ -24,7 +24,6 @@ The game modules are designed in 4 main modules:
 
 
 [![Ile_Interdite-_UML.png](https://s14.postimg.cc/uhn5ko04h/Ile_Interdite-_UML.png)](https://postimg.cc/image/pizn64wbh/)
-
 
 Game manages the game's rules and has references of the players and the isle.
 

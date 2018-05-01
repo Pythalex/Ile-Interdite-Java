@@ -106,7 +106,7 @@ public class Ile
 	 * @param y the target y position
 	 */
 	public boolean playerCanMove(int x, int y){
-		if (x < 0 || x > width || y < 0 || y > height)
+		if (x < 0 || x >= width || y < 0 || y >= height)
 			return false;
 
 		return !cases[y * width + x].isSubmerged();

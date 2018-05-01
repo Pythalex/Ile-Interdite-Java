@@ -25,6 +25,7 @@ public class Game extends Observable
 
 	// List containing the players in the game
 	public Player[] players;
+	public Player currentPlayer;
 
 	// obtainedKey
 	public boolean[] keys;
@@ -32,6 +33,9 @@ public class Game extends Observable
 	// artifacts
 	List<Event> artifacts = new ArrayList<>(Arrays.asList(Event.Element_water, Event.Element_fire,
 			Event.Element_earth, Event.Element_air));
+
+	// interface
+	public GUInterface intfc;
 
 	/**
 	 * Creates a game given the dimension width, height, and the
@@ -68,7 +72,8 @@ public class Game extends Observable
 			keys[i] = false;
 
 		// the interface
-		addObserver(new GUInterface(this));
+		intfc = new GUInterface(this);
+		addObserver(intfc);
 		notifyObservers();
 	}
 
@@ -117,21 +122,24 @@ public class Game extends Observable
 		Case elementFire = isle.foundCaseByEvent(Event.Element_fire);
 		Case elementEarth = isle.foundCaseByEvent(Event.Element_earth);
 		Case elementAir = isle.foundCaseByEvent(Event.Element_air);
-		List<Case> elementsCases = new ArrayList<>(Arrays.asList(elementWater, elementEarth, elementEarth, elementAir));
+		List<Case> elementsCases = new ArrayList<>(Arrays.asList(elementWater, elementEarth,
+				elementEarth, elementAir));
 
 		while (!end) {
 
-			System.out.println("Turn " + tour);
+			message("Turn " + tour);
 			tour++;
 
 			// player turns
 			for (Player p: players){
 
+				currentPlayer = p;
+
 				// Don't play turn if game is finished
 				if (end)
 					break;
 
-				System.out.println("Player " + p.name + " has to play.");
+				message("Player " + p.name + " has to play.");
 
 				// 3 actions at max
 				makeAction(p, 3);
@@ -139,8 +147,14 @@ public class Game extends Observable
 				// search for keys
 				searchKeys(p);
 
+				sleep(1000);
+
 				// flood 3 cases
 				isle.floodCases(3);
+
+				notifyObservers();
+
+				sleep(500);
 
 				/* DEFEAT CHECKS */
 
@@ -148,20 +162,20 @@ public class Game extends Observable
 				Player submergedPlayer = checkSubmergedPlayer();
 				if (submergedPlayer != null) {
 					end = true;
-					System.out.println("Player " + submergedPlayer.name + " drowned.");
+					message("Player " + submergedPlayer.name + " drowned.");
 				}
 
 				// If the helicopter is submerged, the game is finished
 				if (heliport.isSubmerged()){
 					end = true;
-					System.out.println("The helicopter got submerged, the players are trap on the island !");
+					message("The helicopter got submerged, the players are trap on the island !");
 				}
 
 				// If any artifact is submerged, the game is finished
 				for (Case artifact: elementsCases){
 					if (artifact.isSubmerged()){
 						end = true;
-						System.out.println("The " + artifact.event.getName() +
+						message("The " + artifact.event.getName() +
 								" got submerged, the players lose !");
 						break;
 					}
@@ -173,28 +187,28 @@ public class Game extends Observable
 					win = true;
 				}
 
+				sleep(1000);
+
 				// update view
 				notifyObservers();
 			}
 
-			// update view
-			notifyObservers();
-
 			// Next turn
 			if (!end) {
-				System.out.println("Turn ended. Press input");
-				waitForInput();
-				System.out.println("Go for next turn.");
+				message("Turn ended. Go for next turn.");
+				sleep(1000);
 			}
+
+			// update view
+			notifyObservers();
 		}
 
 		if (win){
-			System.out.println("Congrats ! You won !");
+			message("Congrats ! You won !");
 		} else {
-			System.out.println("Too bad, you lose.");
+			message("Too bad, you lose.");
 		}
-		System.out.println("Press enter to quit.");
-		waitForInput();
+		message("You can exit the game, now.");
 	}
 
 	/**
@@ -209,7 +223,7 @@ public class Game extends Observable
 
 			// Get an action
 			String action = p.takeAction();
-			System.out.println("Player " + p.name + " : " + action);
+			message("Player " + p.name + " : " + action);
 
 			/*
 				If the action is valid, the game computes the result.
@@ -277,7 +291,7 @@ public class Game extends Observable
 				return true;
 			}
 			else {
-				System.out.println("You cannot move up.");
+				message("You cannot move up.");
 				return false;
 			}
 		}
@@ -286,7 +300,7 @@ public class Game extends Observable
 				return true;
 			}
 			else {
-				System.out.println("You cannot move down.");
+				message("You cannot move down.");
 				return false;
 			}
 		}
@@ -295,7 +309,7 @@ public class Game extends Observable
 				return true;
 			}
 			else {
-				System.out.println("You cannot move to the left.");
+				message("You cannot move to the left.");
 				return false;
 			}
 		}
@@ -304,15 +318,15 @@ public class Game extends Observable
 				return true;
 			}
 			else {
-				System.out.println("You cannot move to the right.");
+				message("You cannot move to the right.");
 				return false;
 			}
 		} else if (action.equals("dry")) {
 			if (c.isDry()){
-				System.out.println("Your current case is already dry.");
+				message("Your current case is already dry.");
 				return false;
 			} else if (c.isSubmerged()){
-				System.out.println("Your current case is submerged.");
+				message("Your current case is submerged.");
 				return false;
 			} else {
 				return true;
@@ -329,18 +343,18 @@ public class Game extends Observable
 				int index = artifacts.indexOf(caseEvent);
 				// Player has the key ?
 				if (p.keys[index]){
-					System.out.println("Player " + p.name + " got the " + caseEvent.getName());
+					message("Player " + p.name + " got the " + caseEvent.getName());
 					return true;
 				} else {
-					System.out.println("You don't have the " + caseEvent.getName() + " key.");
+					message("You don't have the " + caseEvent.getName() + " key.");
 				}
 			} else {
-				System.out.println("There is no artifact on your current case.");
+				message("There is no artifact on your current case.");
 			}
 
 			return false;
 		} else {
-			System.out.println("Action not understood.");
+			message("Action not understood.");
 			return false;
 		}
 	}
@@ -386,15 +400,15 @@ public class Game extends Observable
 				keys[chosenKey] = true;
 				p.keys[chosenKey] = true;
 				String elm = (chosenKey == 0 ? "water" : (chosenKey == 1 ? "fire" : (chosenKey == 2 ? "earth" : "air")));
-				System.out.println("Player " + p.name + " found the " + elm + " key.");
+				message("Player " + p.name + " found the " + elm + " key.");
 				break;
 			// find nothing
 			case 1:
-				System.out.println("Player " + p.name + " found nothing in the area.");
+				message("Player " + p.name + " found nothing in the area.");
 				break;
 			// flood the case
 			default:
-				System.out.println("Damn ! Player " + p.name + " triggered a trap, water comes from " +
+				message("Damn ! Player " + p.name + " triggered a trap, water comes from " +
 					"nowhere and the entire area is suddenly flooded !");
 				getPlayerCase(p).flood();
 				break;
@@ -490,6 +504,23 @@ public class Game extends Observable
 		} catch (IOException e) {
 			System.err.println(e);
 		}
+	}
+
+	/**
+	 * Sleeps for given miliseconds.
+	 * @param ms the miliseconds to wait
+	 */
+	public static void sleep(int ms){
+		try{
+			Thread.sleep(ms);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+
+	public void message(String msg){
+		System.out.println(msg);
+		intfc.message(msg);
 	}
 
 	public static void main(String[] args){
