@@ -27,6 +27,9 @@ public class Player
 	// The master game instance
 	public Game gameMaster;
 
+	// character class of the player
+	public CharacterClasses chClass = CharacterClasses.Default;
+
 	/**
 	 * Creates and returns a player given a master
 	 * game instance. The name will be 'undefined'.
@@ -64,7 +67,6 @@ public class Player
 	public String takeAction(){
 		return pc.askAction();
 	}
-
 
 	/**
 	 * Initiates boolean array items

@@ -1,10 +1,8 @@
 package game.main.view;
 
 import game.main.controller.PlayerController;
-import game.main.model.Case;
-import game.main.model.Game;
-import game.main.model.Ile;
-import game.main.model.Player;
+import game.main.model.*;
+import javafx.util.Pair;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -14,6 +12,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
+import java.util.Scanner;
 
 public class GUInterface extends JPanel implements Observer{
 
@@ -24,7 +23,6 @@ public class GUInterface extends JPanel implements Observer{
     private JFrame window;
     private JTextArea textArea;
     private JScrollPane textAreaScroller;
-    private String text;
 
     // resources
     private Color colorCaseStroke = Color.BLACK;
@@ -37,6 +35,21 @@ public class GUInterface extends JPanel implements Observer{
     private BufferedImage artifactFireSprite;
     private BufferedImage artifactEarthSprite;
     private BufferedImage artifactAirSprite;
+
+    // buttons
+    private JButton upButton;
+    private JButton upLeftButton;
+    private JButton leftButton;
+    private JButton downLeftButton;
+    private JButton downButton;
+    private JButton downRightButton;
+    private JButton rightButton;
+    private JButton upRightButton;
+    private JButton moveToButton;
+    private JButton simpleDryButton;
+    private JButton doubleDryButton;
+    private JButton passButton;
+    private JButton artifactButton;
 
     /// CONSTRUCTORS
 
@@ -63,7 +76,8 @@ public class GUInterface extends JPanel implements Observer{
         window.add(this, gridRules);
 
         setPreferredSize(new Dimension(size, size));
-        setSize(window.getHeight(), window.getHeight());
+        setMinimumSize(new Dimension(size, size));
+        setSize(new Dimension(size, size));
 
         // ---------- Buttons and text --------------------
 
@@ -87,7 +101,7 @@ public class GUInterface extends JPanel implements Observer{
         // move up
         buttonRules.gridx = 1;
         buttonRules.gridy = 0;
-        JButton upButton = new JButton("Up");
+        upButton = new JButton("↑");
         // can't give a function callback directly, must use this annoying workaround
         upButton.addActionListener(new ActionListener() {
             @Override
@@ -97,10 +111,22 @@ public class GUInterface extends JPanel implements Observer{
         });
         buttonContainer.add(upButton, buttonRules);
 
+        // move up left
+        buttonRules.gridx = 0;
+        buttonRules.gridy = 0;
+        upLeftButton = new JButton("↖");
+        upLeftButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "moveupleft";
+            }
+        });
+        buttonContainer.add(upLeftButton, buttonRules);
+
         // move left
         buttonRules.gridx = 0;
         buttonRules.gridy = 1;
-        JButton leftButton = new JButton("Left");
+        leftButton = new JButton("←");
         leftButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -109,22 +135,22 @@ public class GUInterface extends JPanel implements Observer{
         });
         buttonContainer.add(leftButton, buttonRules);
 
-        // move right
-        buttonRules.gridx = 2;
-        buttonRules.gridy = 1;
-        JButton rightButton = new JButton("Right");
-        rightButton.addActionListener(new ActionListener() {
+        // move down left
+        buttonRules.gridx = 0;
+        buttonRules.gridy = 2;
+        downLeftButton = new JButton("↙");
+        downLeftButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                master.currentPlayer.pc.actionBuffer = "moveright";
+                master.currentPlayer.pc.actionBuffer = "movedownleft";
             }
         });
-        buttonContainer.add(rightButton, buttonRules);
+        buttonContainer.add(downLeftButton, buttonRules);
 
         // move down
         buttonRules.gridx = 1;
         buttonRules.gridy = 2;
-        JButton downButton = new JButton("Down");
+        downButton = new JButton("↓");
         downButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -133,10 +159,58 @@ public class GUInterface extends JPanel implements Observer{
         });
         buttonContainer.add(downButton, buttonRules);
 
-        // pass
+        // move down right
+        buttonRules.gridx = 2;
+        buttonRules.gridy = 2;
+        downRightButton = new JButton("↘");
+        downRightButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "movedownright";
+            }
+        });
+        buttonContainer.add(downRightButton, buttonRules);
+
+        // move right
+        buttonRules.gridx = 2;
+        buttonRules.gridy = 1;
+        rightButton = new JButton("→");
+        rightButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "moveright";
+            }
+        });
+        buttonContainer.add(rightButton, buttonRules);
+
+        // move up right
+        buttonRules.gridx = 2;
+        buttonRules.gridy = 0;
+        upRightButton = new JButton("↗");
+        upRightButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "moveupright";
+            }
+        });
+        buttonContainer.add(upRightButton, buttonRules);
+
+        // move to button - used by pilot
         buttonRules.gridx = 1;
+        buttonRules.gridy = 1;
+        moveToButton = new JButton("\uD83D\uDEE7"); // airplane symbol
+        moveToButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "moveto";
+            }
+        });
+        buttonContainer.add(moveToButton, buttonRules);
+
+        // pass
+        buttonRules.gridx = 0;
         buttonRules.gridy = 4;
-        JButton passButton = new JButton("Pass");
+        passButton = new JButton("Pass");
         passButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -146,21 +220,33 @@ public class GUInterface extends JPanel implements Observer{
         buttonContainer.add(passButton, buttonRules);
 
         // dry
-        buttonRules.gridx = 0;
+        buttonRules.gridx = 1;
         buttonRules.gridy = 4;
-        JButton dryButton = new JButton("Dry");
-        dryButton.addActionListener(new ActionListener() {
+        simpleDryButton = new JButton("Dry");
+        simpleDryButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 master.currentPlayer.pc.actionBuffer = "dry";
             }
         });
-        buttonContainer.add(dryButton, buttonRules);
+        buttonContainer.add(simpleDryButton, buttonRules);
+
+        // double dry
+        buttonRules.gridx = 1;
+        buttonRules.gridy = 5;
+        doubleDryButton = new JButton("Double Dry");
+        doubleDryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                master.currentPlayer.pc.actionBuffer = "doubledry";
+            }
+        });
+        buttonContainer.add(doubleDryButton, buttonRules);
 
         // get artifact
         buttonRules.gridx = 2;
         buttonRules.gridy = 4;
-        JButton artifactButton = new JButton("Artifact");
+        artifactButton = new JButton("Artifact");
         artifactButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -216,14 +302,97 @@ public class GUInterface extends JPanel implements Observer{
      * @param msg the message to display
      */
     public void message(String msg){
-        text = msg;
         textArea.append(msg + "\n");
         // this makes the text area auto scroll when filled
         textArea.setCaretPosition(textArea.getDocument().getLength());
     }
 
-    public void autoScrollAtTextAreaEnd(){
+    /**
+     * NOT USED BECAUSE SWING SEEMS TO DESTROY THE INTERFACE (PANELS ARE
+     * BADLY RESIZED) WHEN RECALCULATING WIDGETS PLACEMENTS.
+     */
+    public void adaptKeyToPlayerClass(CharacterClasses chClass){
 
+        // common behavior
+        hideDiagonallyMoveButtons();
+        moveToButton.setEnabled(false);
+        doubleDryButton.setEnabled(false);
+
+        switch (chClass){
+            case Default:
+                break;
+            case Pilot:
+                moveToButton.setEnabled(true);
+                break;
+            case Engineer:
+                doubleDryButton.setEnabled(true);
+                break;
+            case Explorer:
+                showDiagonallyMoveButtons();
+                break;
+            case Diver:
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Sets the visibility of all buttons allowing
+     * diagonal movements to false.
+     */
+    public void hideDiagonallyMoveButtons(){
+        upLeftButton.setEnabled(false);
+        downLeftButton.setEnabled(false);
+        upRightButton.setEnabled(false);
+        downRightButton.setEnabled(false);
+    }
+
+    /**
+     * Sets the visibility of all buttons allowing
+     * diagonal movements to true.
+     */
+    public void showDiagonallyMoveButtons(){
+        upLeftButton.setEnabled(true);
+        downLeftButton.setEnabled(true);
+        upRightButton.setEnabled(true);
+        downRightButton.setEnabled(true);
+    }
+
+    /**
+     * Asks a position to the player.
+     * @return a 2D coordinate
+     */
+    public Pair<Integer, Integer> askPosition(){
+        Pair<Integer, Integer> pos = new Pair<>(0, 0);
+        boolean valid = false;
+        while (!valid){
+            String position = null;
+            while (position == null) {
+                position = JOptionPane.showInputDialog(window,
+                        "Give a position to go as x;y", null);
+            }
+            String[] coordinates = position.split(";");
+
+            // If given string is in the format x;y
+            if (coordinates.length == 2 && isInteger(coordinates[0]) &&
+                    isInteger(coordinates[1])){
+                valid = true;
+                pos = new Pair<>(Integer.parseInt(coordinates[0]),
+                        Integer.parseInt(coordinates[1]));
+            } else {
+                JOptionPane.showMessageDialog(window,
+                        "You have not given a correct position.",
+                        "Position format error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        return pos;
+    }
+
+    public boolean isInteger(String s){
+        Scanner sc = new Scanner(s.trim());
+        return sc.hasNextInt();
     }
 
     /// DRAW METHODS
@@ -404,6 +573,7 @@ public class GUInterface extends JPanel implements Observer{
         clear(g);
         drawIsle(g);
         drawPlayers(g);
+        adaptKeyToPlayerClass(master.currentPlayer.chClass);
     }
 
     // Load resources

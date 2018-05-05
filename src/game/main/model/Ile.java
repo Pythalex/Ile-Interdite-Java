@@ -113,6 +113,16 @@ public class Ile
 	}
 
 	/**
+	 * Returns the Case instance in cases at position x y
+	 * @param x the coordinate x
+	 * @param y the coordinate y
+	 * @return the case at (x, y)
+	 */
+	public Case getCase(int x, int y){
+		return cases[y * width + x];
+	}
+
+	/**
 	 * Finds and returns the first case satisfying the
 	 * Event query. If nothing is found, returns null
 	 * @param e the event criteria.

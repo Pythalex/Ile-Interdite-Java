@@ -5,11 +5,8 @@ import game.main.view.GUInterface;
 
 // used for random position generation
 import javafx.util.Pair;
-import java.util.Random;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 // used for image loading
 import java.io.IOException;
@@ -26,6 +23,9 @@ public class Game extends Observable
 	// List containing the players in the game
 	public Player[] players;
 	public Player currentPlayer;
+	// Classes not already assigned to a player
+	public List<CharacterClasses> availableClasses = new ArrayList<>(Arrays.asList(CharacterClasses.Pilot,
+			CharacterClasses.Engineer, CharacterClasses.Explorer, CharacterClasses.Diver));
 
 	// obtainedKey
 	public boolean[] keys;
@@ -53,18 +53,28 @@ public class Game extends Observable
 		// find the helicopter position to place the players on it
 		Case helicopCase = isle.foundCaseByEvent(Event.Helicopter);
 
+		// Used for class assignment
+		Random rdm = new Random();
+
 		// Create the players
 		players = new Player[nbOfPlayers];
 		char name = 'A';
 		for (int i = 0; i < nbOfPlayers; i++) {
+			// Create the player with an incremented letter name
 			players[i] = new Player(this, "" + name);
 			name = (char)((int)name + 1);
 
+			// Place the player to the helicopter case
 			players[i].x = helicopCase.x;
 			players[i].y = helicopCase.y;
-
 			helicopCase.players.add(players[i]);
+
+			// class assignment - Assign randomly from available classes
+			players[i].chClass = availableClasses.get(rdm.nextInt(availableClasses.size()));
+			// The class is no longer available
+			availableClasses.remove(players[i].chClass);
 		}
+		currentPlayer = players[0];
 
 		// the keys
 		keys = new boolean[4];
@@ -139,7 +149,7 @@ public class Game extends Observable
 				if (end)
 					break;
 
-				message("Player " + p.name + " has to play.");
+				message( p.chClass + " " + p.name + " has to play.");
 
 				// 3 actions at max
 				makeAction(p, 3);
@@ -235,23 +245,45 @@ public class Game extends Observable
 				if (action.equals("pass")) {
 					return;
 				} else if (action.equals("moveup")) {
-					removePlayerRefFromCase(p);
-					p.y--;
-					addPlayerRefToCase(p);
-				} else if (action.equals("movedown")) {
-					removePlayerRefFromCase(p);
-					p.y++;
-					addPlayerRefToCase(p);
+					movePlayer(p, p.x, p.y - 1);
+				} else if (action.equals("moveupleft")){
+					movePlayer(p, p.x - 1, p.y - 1);
 				} else if (action.equals("moveleft")) {
-					removePlayerRefFromCase(p);
-					p.x--;
-					addPlayerRefToCase(p);
+					movePlayer(p, p.x - 1, p.y);
+				} else if (action.equals("movedownleft")){
+					movePlayer(p, p.x - 1, p.y + 1);
+				} else if (action.equals("movedown")) {
+					movePlayer(p, p.x, p.y + 1);
+				} else if (action.equals("movedownright")) {
+					movePlayer(p, p.x + 1, p.y + 1);
 				} else if (action.equals("moveright")) {
-					removePlayerRefFromCase(p);
-					p.x++;
-					addPlayerRefToCase(p);
+					movePlayer(p, p.x + 1, p.y);
+				} else if (action.equals("moveupright")) {
+					movePlayer(p, p.x + 1, p.y - 1);
+				} else if (action.equals("moveto")) {
+					boolean playerChoseValidCase = false;
+					while (!playerChoseValidCase) {
+
+						Pair<Integer, Integer> pos = intfc.askPosition();
+						if (isle.playerCanMove(pos.getKey(), pos.getValue())) {
+							movePlayer(p, pos.getKey(), pos.getValue());
+							playerChoseValidCase = true;
+						} else {
+							message("The case is not accessible.");
+						}
+					}
 				} else if (action.equals("dry")){
-					getPlayerCase(p).dry();
+					boolean playerChoseValidCase = false;
+					while(!playerChoseValidCase) {
+						playerChoseValidCase = makePlayerDryCase(p);
+					}
+				} else if (action.equals("doubledry")){
+					for (int i = 0; i < 2; i++){
+						boolean playerChoseValidCase = false;
+						while(!playerChoseValidCase) {
+							playerChoseValidCase = makePlayerDryCase(p);
+						}
+					}
 				} else if (action.equals("getartifact")) {
 					// Get the player's case
 					Case c = getPlayerCase(p);
@@ -285,51 +317,135 @@ public class Game extends Observable
 
 		if (action.equals("pass")){
 			return true;
-		}
-		else if (action.equals("moveup")){
+		} else if (action.equals("moveup")){
 			if (isle.playerCanMove(p.x, p.y - 1)) {
 				return true;
 			}
 			else {
-				message("You cannot move up.");
+				message("The case is not accessible.");
 				return false;
 			}
-		}
-		else if (action.equals("movedown")){
-			if (isle.playerCanMove(p.x, p.y + 1)) {
-				return true;
+		} else if (action.equals("moveupleft")){
+			if (p.chClass == CharacterClasses.Explorer){
+				if (isle.playerCanMove(p.x - 1, p.y - 1)){
+					return true;
+				} else {
+					message("The case is not accessible.");
+				}
+			} else {
+				message("You are not an explorer.");
 			}
-			else {
-				message("You cannot move down.");
-				return false;
-			}
-		}
-		else if (action.equals("moveleft")){
+			return false;
+		} else if (action.equals("moveleft")){
 			if (isle.playerCanMove(p.x - 1, p.y)) {
 				return true;
 			}
 			else {
-				message("You cannot move to the left.");
+				message("The case is not accessible.");
 				return false;
 			}
-		}
-		else if (action.equals("moveright")) {
+		} else if (action.equals("movedownleft")){
+			if (p.chClass == CharacterClasses.Explorer){
+				if (isle.playerCanMove(p.x - 1, p.y + 1)){
+					return true;
+				} else {
+					message("The case is not accessible.");
+				}
+			} else {
+				message("You are not an explorer.");
+			}
+			return false;
+		} else if (action.equals("movedown")){
+			if (isle.playerCanMove(p.x, p.y + 1)) {
+				return true;
+			}
+			else {
+				message("The case is not accessible.");
+				return false;
+			}
+		} else if (action.equals("movedownright")){
+			if (p.chClass == CharacterClasses.Explorer){
+				if (isle.playerCanMove(p.x + 1, p.y + 1)){
+					return true;
+				} else {
+					message("The case is not accessible.");
+				}
+			} else {
+				message("You are not an explorer.");
+			}
+			return false;
+		} else if (action.equals("moveright")) {
 			if (isle.playerCanMove(p.x + 1, p.y)) {
 				return true;
 			}
 			else {
-				message("You cannot move to the right.");
+				message("The case is not accessible.");
 				return false;
 			}
-		} else if (action.equals("dry")) {
-			if (c.isDry()){
-				message("Your current case is already dry.");
-				return false;
-			} else if (c.isSubmerged()){
-				message("Your current case is submerged.");
-				return false;
+		} else if (action.equals("moveupright")){
+			if (p.chClass == CharacterClasses.Explorer){
+				if (isle.playerCanMove(p.x + 1, p.y - 1)){
+					return true;
+				} else {
+					message("The case is not accessible.");
+				}
 			} else {
+				message("You are not an explorer.");
+			}
+			return false;
+		} else if (action.equals("moveto")) {
+			if (p.chClass == CharacterClasses.Pilot){
 				return true;
+			} else {
+				message("You are not a pilot.");
+			}
+			return false;
+		} else if (action.equals("dry")) {
+			List<Case> cases = new ArrayList<>();
+			cases.add(c);
+			if (isle.playerCanMove(p.x, p.y - 1))
+				cases.add(isle.getCase(p.x, p.y - 1));
+			if (isle.playerCanMove(p.x, p.y + 1))
+				cases.add(isle.getCase(p.x, p.y + 1));
+			if (isle.playerCanMove(p.x - 1, p.y))
+				cases.add(isle.getCase(p.x - 1, p.y));
+			if (isle.playerCanMove(p.x + 1, p.y))
+				cases.add(isle.getCase(p.x + 1, p.y));
+			boolean hasAtLeastOneNeighbourFlooded = false;
+			for (Case neighbour: cases)
+				hasAtLeastOneNeighbourFlooded = hasAtLeastOneNeighbourFlooded || neighbour.isFlooded();
+
+			if (hasAtLeastOneNeighbourFlooded)
+				return true;
+			else {
+				message("You have not at least one flooded neighbour case.");
+				return false;
+			}
+		} else if (action.equals("doubledry")) {
+			if (p.chClass == CharacterClasses.Engineer){
+				List<Case> cases = new ArrayList<>();
+				cases.add(c);
+				if (isle.playerCanMove(p.x, p.y - 1))
+					cases.add(isle.getCase(p.x, p.y - 1));
+				if (isle.playerCanMove(p.x, p.y + 1))
+					cases.add(isle.getCase(p.x, p.y + 1));
+				if (isle.playerCanMove(p.x - 1, p.y))
+					cases.add(isle.getCase(p.x - 1, p.y));
+				if (isle.playerCanMove(p.x + 1, p.y))
+					cases.add(isle.getCase(p.x + 1, p.y));
+				int numberOfFloodedNeighbours = 0;
+				for (Case neighbour: cases)
+					numberOfFloodedNeighbours += (neighbour.isFlooded() ? 1 : 0);
+
+				if (numberOfFloodedNeighbours >= 2){
+					return true;
+				} else {
+					message("You have not at least 2 flooded neighbour cases.");
+					return false;
+				}
+			} else {
+				message("You are not an Engineer.");
+				return false;
 			}
 		} else if (action.equals("getartifact")) {
 			// Get the player's case
@@ -357,6 +473,46 @@ public class Game extends Observable
 			message("Action not understood.");
 			return false;
 		}
+	}
+
+	/**
+	 * Make the player move to x, y, and update the case references.
+	 * @param p the player to move
+	 * @param x the new position x
+	 * @param y the new position y
+	 */
+	public void movePlayer(Player p, int x, int y){
+		removePlayerRefFromCase(p);
+		p.x = x;
+		p.y = y;
+		addPlayerRefToCase(p);
+	}
+
+	/**
+	 * Make the player choose a case and dry it if valid.
+	 * @param p the player
+	 * @return whether the action is successful (valid case)
+	 */
+	public boolean makePlayerDryCase(Player p){
+		// Ask for position and check if in the vicinity (neighbour or self)
+		Pair<Integer, Integer> pos = intfc.askPosition();
+		int x = p.x - pos.getKey();
+		int y = p.y - pos.getValue();
+		double length = Math.sqrt(x*x + y*y);
+		if (length <= 1){
+			// if dryable case
+			Case c = isle.getCase(pos.getKey(), pos.getValue());
+			if (c.isFlooded()){
+				c.dry();
+			} else {
+				message("The case cannot be dried.");
+				return false;
+			}
+		} else {
+			message("The case is not in your neighbourhood (1 case).");
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -519,7 +675,6 @@ public class Game extends Observable
 	}
 
 	public void message(String msg){
-		System.out.println(msg);
 		intfc.message(msg);
 	}
 
