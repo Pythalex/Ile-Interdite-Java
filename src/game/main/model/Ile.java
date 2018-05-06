@@ -9,6 +9,8 @@ import java.util.Random;
  */
 public class Ile
 {
+	/// ATTRIBUTES
+
 	// Isle's grid width	
 	public int width;
 	// Isle's grid height
@@ -23,6 +25,8 @@ public class Ile
 
 	// The master game instance
 	public Game gameMaster;
+
+	/// CONSTRUCTORS
 
 	/**
 	 * Creates and returns an isle of a given
@@ -41,6 +45,41 @@ public class Ile
 		initiateCases();
 	}
 
+	/// METHODS
+
+	/**
+	 * Floods n cases where n has to be in [0, width*height]
+	 * Prioritizes the non-submerged cases.
+	 * @param caseIndex the index of the case to flood
+	 */
+	public void floodCase(int caseIndex) {
+		cases[caseIndex].flood();
+	}
+
+	/**
+	 * Finds and returns the first case satisfying the
+	 * Event query. If nothing is found, returns null
+	 * @param e the event criteria.
+	 * @return the case's ref
+	 */
+	public Case foundCaseByEvent(Event e){
+		for (Case c: cases){
+			if (c.event == e)
+				return c;
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the Case instance in cases at position x y
+	 * @param x the coordinate x
+	 * @param y the coordinate y
+	 * @return the case at (x, y)
+	 */
+	public Case getCase(int x, int y){
+		return cases[y * width + x];
+	}
+
 	/**
 	 * Initiates the grid's cases.
 	 * Every case will be dry and without event.
@@ -51,50 +90,6 @@ public class Ile
 				cases[j * width + i] = new Case(this, i, j);
 			}
 		}
-	}
-
-	/**
-	 * Floods n cases where n has to be in [0, width*height]
-	 * Prioritizes the non-submerged cases.
-	 * @param n The number of cases to flood
-	 */
-	public void floodCases(int n) {
-
-		if (n < 0 || n > numberOfCases)
-			return;
-
-		Random rdmGen = new Random();
-		List<Integer> chosen = new ArrayList<>();
-
-		boolean alreadyChosen;
-		boolean allSubmerged = numberOfSubmerged == numberOfCases;
-		boolean isSubmerged;
-
-		while (n > 0){
-
-			int rand = Math.abs(rdmGen.nextInt() % (numberOfCases));
-
-			// Prevent choosing the same case twice and
-			alreadyChosen = chosen.contains(rand);
-			// prioritized dry/flooded cases over submerged ones
-			isSubmerged   = cases[rand].isSubmerged();
-
-			if ( !( alreadyChosen || (isSubmerged && !allSubmerged) ) ) {
-
-				// the case is selected to flood
-				chosen.add(rand);
-				n--;
-
-				// the case is flooded
-				cases[rand].flood();
-				if (cases[rand].isSubmerged()) {
-					numberOfSubmerged++;
-					// update allSubmerged boolean
-					allSubmerged = numberOfSubmerged == numberOfCases;
-				}
-			}
-		}
-
 	}
 
 	/**
@@ -110,30 +105,6 @@ public class Ile
 			return false;
 
 		return !cases[y * width + x].isSubmerged();
-	}
-
-	/**
-	 * Returns the Case instance in cases at position x y
-	 * @param x the coordinate x
-	 * @param y the coordinate y
-	 * @return the case at (x, y)
-	 */
-	public Case getCase(int x, int y){
-		return cases[y * width + x];
-	}
-
-	/**
-	 * Finds and returns the first case satisfying the
-	 * Event query. If nothing is found, returns null
-	 * @param e the event criteria.
-	 * @return the case's ref
-	 */
-	public Case foundCaseByEvent(Event e){
-		for (Case c: cases){
-			if (c.event == e)
-				return c;
-		}
-		return null;
 	}
 
 	@Override

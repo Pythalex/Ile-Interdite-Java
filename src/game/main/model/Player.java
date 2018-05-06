@@ -12,9 +12,6 @@ public class Player
 	public int x;
 	public int y;
 
-	// Player's name
-	public String name = "undefined";
-
 	// The artifacts carried by the player : W - F - E - A 
 	public boolean[] artifact;
 
@@ -44,20 +41,7 @@ public class Player
 		artifact = new boolean[4];
 		keys = new boolean[4];
 
-		pc = new PlayerController(name);
-	}
-
-	/**
-	 * Creates and returns a player given a master
-	 * game instance. The player is named with
-	 * the name given in argument.
-	 *
-	 * @param master The master game instance
-	 */
-	public Player(Game master, String name){
-		this(master);
-		this.name = name;
-		pc.ID = name;
+		pc = new PlayerController();
 	}
 
 	/**

@@ -37,6 +37,12 @@ public class Game extends Observable
 	// interface
 	public GUInterface intfc;
 
+	// flood cards
+	public CaseCardSet floodSet;
+	// treasure cards
+	public TreasureCardSet treasureSet;
+	public TreasureCardSet discardTreasureSet;
+
 	/**
 	 * Creates a game given the dimension width, height, and the
 	 * number of players.
@@ -60,8 +66,8 @@ public class Game extends Observable
 		players = new Player[nbOfPlayers];
 		char name = 'A';
 		for (int i = 0; i < nbOfPlayers; i++) {
-			// Create the player with an incremented letter name
-			players[i] = new Player(this, "" + name);
+			// Create the player
+			players[i] = new Player(this);
 			name = (char)((int)name + 1);
 
 			// Place the player to the helicopter case
@@ -85,140 +91,117 @@ public class Game extends Observable
 		intfc = new GUInterface(this);
 		addObserver(intfc);
 		notifyObservers();
+
+		// the flood card set
+		floodSet = new CaseCardSet(isle.numberOfCases);
+
+		// the treasure card set
+		treasureSet = new TreasureCardSet();
+		discardTreasureSet = new TreasureCardSet();
+		discardTreasureSet.empty();
 	}
 
 	/**
-	 * Generates the island to include all the required element for a game,
-	 * like heliport, artifacts.
+	 * Removes the player reference from the case player list.
+	 * @param p the player
 	 */
-	public void generateIsland(){
+	public void addPlayerRefToCase(Player p){
+		getPlayerCase(p).players.add(p);
+	}
 
+	/**
+	 * Checks if all elements have been gathered.
+	 * @return true if all elements have been gathered.
+	 */
+	public boolean allGatheredElements(){
+		boolean[] arts = {false, false, false, false};
+
+		for (Player p: players)
+			for (int i = 0; i < arts.length; i++)
+				arts[i] = arts[i] || p.artifact[i];
+
+		boolean all = true;
+		for (boolean b: arts)
+			all = all && b;
+
+		return all;
+	}
+
+	/**
+	 * Checks if the given position has already been chosen.
+	 * @param chosen the list of chosen positions
+	 * @param newPos the new position to test
+	 * @return whether the position is in chosen list.
+	 */
+	public boolean checkAlreadyChosenPosition(List<Pair<Integer, Integer>> chosen, Pair<Integer, Integer> newPos){
+		for (Pair<Integer, Integer> p: chosen)
+			if (p.getKey() == newPos.getKey() && p.getValue() == newPos.getValue())
+				return true;
+		return false;
+	}
+
+	/**
+	 * Checks if a player is on a submerged case. Returns
+	 * the first found player's ref, or null if everybody is
+	 * on a solid or flooded case.
+	 * @return returns the player ref or null
+	 */
+	public Player checkSubmergedPlayer(){
+		for (Player p: players)
+			if (getPlayerCase(p).isSubmerged())
+				return p;
+		return null;
+	}
+
+	/**
+	 * @return whether every players is on the heliport.
+	 */
+	public boolean everyoneAtHeliport(){
+		boolean everyone = true;
+		Case helicopCase = isle.foundCaseByEvent(Event.Helicopter);
+
+		for (Player p: players)
+			everyone = everyone && (p.x == helicopCase.x && p.y == helicopCase.y);
+
+		return everyone;
+	}
+
+	/**
+	 * Flood the given number of cases to flood.
+	 * @param nbOfCaseToFlood the number of cases to flood.
+	 */
+	public void floodCases(int nbOfCaseToFlood){
+		// repeat operation for each case
+		for (int i = 0; i < nbOfCaseToFlood; i++){
+			// draw the flood card
+			int index = floodSet.draw();
+			// flood the case
+			isle.floodCase(index);
+			// place the flood card at the bottom of the deck
+			floodSet.placeAtBottom(index);
+		}
+	}
+
+	/**
+	 * Returns the ref of the case on which is positioned the given player.
+	 * @param p the player
+	 * @return the ref of the case.
+	 */
+	public Case getPlayerCase(Player p){
+		return isle.cases[p.y * isle.width + p.x];
+	}
+
+	/**
+	 * Generates a random x, y position within the given range.
+	 * @param xmin the minimal x coordinate included
+	 * @param xbound the bound x coordinate excluded
+	 * @param ymin the minimal y coordinate included
+	 * @param ybound the bound y coordinate excluded
+	 * @return (x, y)
+	 */
+	public Pair<Integer, Integer> generateRandomPosition(int xmin, int xbound, int ymin, int ybound){
 		Random rdm = new Random();
-		List<Pair<Integer, Integer>> chosenPositions = new ArrayList<>();
-
-		Pair<Integer, Integer> pos;
-
-		// choose a place for heliport
-		pos = generateRandomPosition(0, isle.width, 0, isle.height);
-		chosenPositions.add(pos);
-		// set the case to heliport
-		isle.cases[pos.getValue() * isle.width + pos.getKey()].event = Event.Helicopter;
-
-		// choose places for artifacts
-		List<Event> artifacts = new ArrayList<Event>(Arrays.asList(Event.Element_water, Event.Element_fire,
-				Event.Element_earth, Event.Element_air));
-		for (Event artifact: artifacts){
-			do {
-				pos = generateRandomPosition(0, isle.width, 0, isle.height);
-			} while (checkAlreadyChosenPosition(chosenPositions, pos));
-			chosenPositions.add(pos);
-
-			// Set the case to artifact
-			isle.cases[pos.getValue() * isle.width + pos.getKey()].event = artifact;
-		}
-	}
-
-	/**
-	 * Runs the game.
-	 */
-	public void runGame(){
-
-		boolean end = false;
-		boolean win = false;
-		int tour = 1;
-
-		Case heliport = isle.foundCaseByEvent(Event.Helicopter);
-		Case elementWater = isle.foundCaseByEvent(Event.Element_water);
-		Case elementFire = isle.foundCaseByEvent(Event.Element_fire);
-		Case elementEarth = isle.foundCaseByEvent(Event.Element_earth);
-		Case elementAir = isle.foundCaseByEvent(Event.Element_air);
-		List<Case> elementsCases = new ArrayList<>(Arrays.asList(elementWater, elementEarth,
-				elementEarth, elementAir));
-
-		while (!end) {
-
-			message("Turn " + tour);
-			tour++;
-
-			// player turns
-			for (Player p: players){
-
-				currentPlayer = p;
-
-				// Don't play turn if game is finished
-				if (end)
-					break;
-
-				message( p.chClass + " " + p.name + " has to play.");
-
-				// 3 actions at max
-				makeAction(p, 3);
-
-				// search for keys
-				searchKeys(p);
-
-				sleep(1000);
-
-				// flood 3 cases
-				isle.floodCases(3);
-
-				notifyObservers();
-
-				sleep(500);
-
-				/* DEFEAT CHECKS */
-
-				// if one player is on a submerged case, he's dead and the game is finished
-				Player submergedPlayer = checkSubmergedPlayer();
-				if (submergedPlayer != null) {
-					end = true;
-					message("Player " + submergedPlayer.name + " drowned.");
-				}
-
-				// If the helicopter is submerged, the game is finished
-				if (heliport.isSubmerged()){
-					end = true;
-					message("The helicopter got submerged, the players are trap on the island !");
-				}
-
-				// If any artifact is submerged, the game is finished
-				for (Case artifact: elementsCases){
-					if (artifact.isSubmerged()){
-						end = true;
-						message("The " + artifact.event.getName() +
-								" got submerged, the players lose !");
-						break;
-					}
-				}
-
-				// Victory test
-				if (allGatheredElements() && everyoneAtHeliport()){
-					end = true;
-					win = true;
-				}
-
-				sleep(1000);
-
-				// update view
-				notifyObservers();
-			}
-
-			// Next turn
-			if (!end) {
-				message("Turn ended. Go for next turn.");
-				sleep(1000);
-			}
-
-			// update view
-			notifyObservers();
-		}
-
-		if (win){
-			message("Congrats ! You won !");
-		} else {
-			message("Too bad, you lose.");
-		}
-		message("You can exit the game, now.");
+		return new Pair<>(xmin + rdm.nextInt(xbound), ymin + rdm.nextInt(ybound));
 	}
 
 	/**
@@ -233,7 +216,6 @@ public class Game extends Observable
 
 			// Get an action
 			String action = p.takeAction();
-			message("Player " + p.name + " : " + action);
 
 			/*
 				If the action is valid, the game computes the result.
@@ -301,6 +283,241 @@ public class Game extends Observable
 			}
 
 			notifyObservers();
+		}
+	}
+
+	/**
+	 * Make the player choose a case and dry it if valid.
+	 * @param p the player
+	 * @return whether the action is successful (valid case)
+	 */
+	public boolean makePlayerDryCase(Player p){
+		// Ask for position and check if in the vicinity (neighbour or self)
+		Pair<Integer, Integer> pos = intfc.askPosition();
+		int x = p.x - pos.getKey();
+		int y = p.y - pos.getValue();
+		double length = Math.sqrt(x*x + y*y);
+		if (length <= 1){
+			// if dryable case
+			Case c = isle.getCase(pos.getKey(), pos.getValue());
+			if (c.isFlooded()){
+				c.dry();
+			} else {
+				message("The case cannot be dried.");
+				return false;
+			}
+		} else {
+			message("The case is not in your neighbourhood (1 case).");
+			return false;
+		}
+		return true;
+	}
+
+	public void message(String msg){
+		intfc.message(msg);
+	}
+
+	/**
+	 * Make the player move to x, y, and update the case references.
+	 * @param p the player to move
+	 * @param x the new position x
+	 * @param y the new position y
+	 */
+	public void movePlayer(Player p, int x, int y){
+		removePlayerRefFromCase(p);
+		p.x = x;
+		p.y = y;
+		addPlayerRefToCase(p);
+	}
+
+	/**
+	 * Generates the island to include all the required element for a game,
+	 * like heliport, artifacts.
+	 */
+	public void generateIsland(){
+
+		Random rdm = new Random();
+		List<Pair<Integer, Integer>> chosenPositions = new ArrayList<>();
+
+		Pair<Integer, Integer> pos;
+
+		// choose a place for heliport
+		pos = generateRandomPosition(0, isle.width, 0, isle.height);
+		chosenPositions.add(pos);
+		// set the case to heliport
+		isle.cases[pos.getValue() * isle.width + pos.getKey()].event = Event.Helicopter;
+
+		// choose places for artifacts
+		List<Event> artifacts = new ArrayList<Event>(Arrays.asList(Event.Element_water, Event.Element_fire,
+				Event.Element_earth, Event.Element_air));
+		for (Event artifact: artifacts){
+			do {
+				pos = generateRandomPosition(0, isle.width, 0, isle.height);
+			} while (checkAlreadyChosenPosition(chosenPositions, pos));
+			chosenPositions.add(pos);
+
+			// Set the case to artifact
+			isle.cases[pos.getValue() * isle.width + pos.getKey()].event = artifact;
+		}
+	}
+
+	/**
+	 * Runs the game.
+	 */
+	public void runGame(){
+
+		boolean end = false;
+		boolean win = false;
+		int tour = 1;
+
+		Case heliport = isle.foundCaseByEvent(Event.Helicopter);
+		Case elementWater = isle.foundCaseByEvent(Event.Element_water);
+		Case elementFire = isle.foundCaseByEvent(Event.Element_fire);
+		Case elementEarth = isle.foundCaseByEvent(Event.Element_earth);
+		Case elementAir = isle.foundCaseByEvent(Event.Element_air);
+		List<Case> elementsCases = new ArrayList<>(Arrays.asList(elementWater, elementFire,
+				elementEarth, elementAir));
+
+		while (!end) {
+
+			message("Turn " + tour);
+			tour++;
+
+			// player turns
+			for (Player p: players){
+
+				currentPlayer = p;
+
+				// Don't play turn if game is finished
+				if (end)
+					break;
+
+				message( p.chClass + " has to play.");
+
+				// 3 actions at max
+				makeAction(p, 3);
+
+				// search for keys
+				searchKeys(p);
+
+				sleep(1000);
+
+				// flood 3 cases
+				floodCases(3);
+
+				notifyObservers();
+
+				sleep(500);
+
+				/* DEFEAT CHECKS */
+
+				// if one player is on a submerged case, he's dead and the game is finished
+				Player submergedPlayer = checkSubmergedPlayer();
+				if (submergedPlayer != null) {
+					end = true;
+					message(submergedPlayer.chClass + " drowned.");
+				}
+
+				// If the helicopter is submerged, the game is finished
+				if (heliport.isSubmerged()){
+					end = true;
+					message("The helicopter got submerged, the players are trap on the island !");
+				}
+
+				// If any artifact is submerged, the game is finished
+				for (Case artifact: elementsCases){
+					if (artifact.isSubmerged()){
+						end = true;
+						message("The " + artifact.event.getName() +
+								" got submerged, the players lose !");
+						break;
+					}
+				}
+
+				// Victory test
+				if (allGatheredElements() && everyoneAtHeliport()){
+					end = true;
+					win = true;
+				}
+
+				sleep(1000);
+
+				// update view
+				notifyObservers();
+			}
+
+			// Next turn
+			if (!end) {
+				message("Turn ended. Go for next turn.");
+				sleep(1000);
+			}
+
+			// update view
+			notifyObservers();
+		}
+
+		if (win){
+			message("Congrats ! You won !");
+		} else {
+			message("Too bad, you lose.");
+		}
+		message("You can exit the game, now.");
+	}
+
+	/**
+	 * Adds the player reference to the case player list.
+	 * @param p the player
+	 */
+	public void removePlayerRefFromCase(Player p){
+		getPlayerCase(p).players.remove(p);
+	}
+
+	/**
+	 * Makes the player look for a key on his
+	 * current case.
+	 * @param p the player
+	 */
+	public void searchKeys(Player p){
+		Treasure found = treasureSet.draw();
+		message(p.chClass + " found " + found);
+
+		switch(found){
+			case WaterKey:
+			case FireKey:
+			case EarthKey:
+			case AirKey:
+				p.keys[found.id] = true;
+				break;
+			case RisingWater:
+				getPlayerCase(p).flood();
+				message("Damn ! " + p.chClass +
+						" triggered a trap, water comes from nowhere and the entire area is suddenly flooded !");
+				break;
+			case None:
+			default:
+				break;
+		}
+
+		// If the discard deck has every cards, the pile is shuffled and become the new deck
+		discardTreasureSet.add(found);
+		if (treasureSet.isEmpty()){
+			for (int i = 0; i < discardTreasureSet.size(); i++){
+				Treasure card = discardTreasureSet.draw();
+				treasureSet.add(card);
+			}
+			treasureSet.shuffle();
+		}
+	}
+
+	/**
+	 * Sleeps for given miliseconds.
+	 * @param ms the miliseconds to wait
+	 */
+	public static void sleep(int ms){
+		try{
+			Thread.sleep(ms);
+		} catch (Exception e){
+			e.printStackTrace();
 		}
 	}
 
@@ -459,7 +676,7 @@ public class Game extends Observable
 				int index = artifacts.indexOf(caseEvent);
 				// Player has the key ?
 				if (p.keys[index]){
-					message("Player " + p.name + " got the " + caseEvent.getName());
+					message(p.chClass + " got the " + caseEvent.getName());
 					return true;
 				} else {
 					message("You don't have the " + caseEvent.getName() + " key.");
@@ -476,181 +693,6 @@ public class Game extends Observable
 	}
 
 	/**
-	 * Make the player move to x, y, and update the case references.
-	 * @param p the player to move
-	 * @param x the new position x
-	 * @param y the new position y
-	 */
-	public void movePlayer(Player p, int x, int y){
-		removePlayerRefFromCase(p);
-		p.x = x;
-		p.y = y;
-		addPlayerRefToCase(p);
-	}
-
-	/**
-	 * Make the player choose a case and dry it if valid.
-	 * @param p the player
-	 * @return whether the action is successful (valid case)
-	 */
-	public boolean makePlayerDryCase(Player p){
-		// Ask for position and check if in the vicinity (neighbour or self)
-		Pair<Integer, Integer> pos = intfc.askPosition();
-		int x = p.x - pos.getKey();
-		int y = p.y - pos.getValue();
-		double length = Math.sqrt(x*x + y*y);
-		if (length <= 1){
-			// if dryable case
-			Case c = isle.getCase(pos.getKey(), pos.getValue());
-			if (c.isFlooded()){
-				c.dry();
-			} else {
-				message("The case cannot be dried.");
-				return false;
-			}
-		} else {
-			message("The case is not in your neighbourhood (1 case).");
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Adds the player reference to the case player list.
-	 * @param p the player
-	 */
-	public void removePlayerRefFromCase(Player p){
-		getPlayerCase(p).players.remove(p);
-	}
-
-	/**
-	 * Removes the player reference from the case player list.
-	 * @param p the player
-	 */
-	public void addPlayerRefToCase(Player p){
-		getPlayerCase(p).players.add(p);
-	}
-
-	/**
-	 * Makes the player look for a key on his
-	 * current case.
-	 * @param p the player
-	 */
-	public void searchKeys(Player p){
-		// player position
-		int x = p.x;
-		int y = p.y;
-
-		// 1/3 change for all events
-		Random rdm = new Random();
-		int dice = rdm.nextInt(3);
-
-		switch (dice){
-			// find a key
-			case 0:
-				// choose a key which is not own by a player
-				int chosenKey = -1;
-				do {
-					chosenKey = rdm.nextInt(4);
-				} while(keys[chosenKey]);
-				keys[chosenKey] = true;
-				p.keys[chosenKey] = true;
-				String elm = (chosenKey == 0 ? "water" : (chosenKey == 1 ? "fire" : (chosenKey == 2 ? "earth" : "air")));
-				message("Player " + p.name + " found the " + elm + " key.");
-				break;
-			// find nothing
-			case 1:
-				message("Player " + p.name + " found nothing in the area.");
-				break;
-			// flood the case
-			default:
-				message("Damn ! Player " + p.name + " triggered a trap, water comes from " +
-					"nowhere and the entire area is suddenly flooded !");
-				getPlayerCase(p).flood();
-				break;
-		}
-	}
-
-	/**
-	 * Checks if a player is on a submerged case. Returns
-	 * the first found player's ref, or null if everybody is
-	 * on a solid or flooded case.
-	 * @return returns the player ref or null
-	 */
-	public Player checkSubmergedPlayer(){
-		for (Player p: players)
-			if (getPlayerCase(p).isSubmerged())
-				return p;
-		return null;
-	}
-
-	/**
-	 * Checks if all elements have been gathered.
-	 * @return true if all elements have been gathered.
-	 */
-	public boolean allGatheredElements(){
-		boolean[] arts = {false, false, false, false};
-
-		for (Player p: players)
-			for (int i = 0; i < arts.length; i++)
-				arts[i] = arts[i] || p.artifact[i];
-
-		boolean all = true;
-		for (boolean b: arts)
-			all = all && b;
-
-		return all;
-	}
-
-	/**
-	 * @return whether every players is on the heliport.
-	 */
-	public boolean everyoneAtHeliport(){
-		boolean everyone = true;
-		Case helicopCase = isle.foundCaseByEvent(Event.Helicopter);
-
-		for (Player p: players)
-			everyone = everyone && (p.x == helicopCase.x && p.y == helicopCase.y);
-
-		return everyone;
-	}
-
-	/**
-	 * Returns the ref of the case on which is positioned the given player.
-	 * @param p the player
-	 * @return the ref of the case.
-	 */
-	public Case getPlayerCase(Player p){
-		return isle.cases[p.y * isle.width + p.x];
-	}
-
-	/**
-	 * Generates a random x, y position within the given range.
-	 * @param xmin the minimal x coordinate included
-	 * @param xbound the bound x coordinate excluded
-	 * @param ymin the minimal y coordinate included
-	 * @param ybound the bound y coordinate excluded
-	 * @return (x, y)
-	 */
-	public Pair<Integer, Integer> generateRandomPosition(int xmin, int xbound, int ymin, int ybound){
-		Random rdm = new Random();
-		return new Pair<>(xmin + rdm.nextInt(xbound), ymin + rdm.nextInt(ybound));
-	}
-
-	/**
-	 * Checks if the given position has already been chosen.
-	 * @param chosen the list of chosen positions
-	 * @param newPos the new position to test
-	 * @return whether the position is in chosen list.
-	 */
-	public boolean checkAlreadyChosenPosition(List<Pair<Integer, Integer>> chosen, Pair<Integer, Integer> newPos){
-		for (Pair<Integer, Integer> p: chosen)
-			if (p.getKey() == newPos.getKey() && p.getValue() == newPos.getValue())
-				return true;
-		return false;
-	}
-
-	/**
 	 * DEBUG
 	 * Wait for user input to continue
 	 */
@@ -660,22 +702,6 @@ public class Game extends Observable
 		} catch (IOException e) {
 			System.err.println(e);
 		}
-	}
-
-	/**
-	 * Sleeps for given miliseconds.
-	 * @param ms the miliseconds to wait
-	 */
-	public static void sleep(int ms){
-		try{
-			Thread.sleep(ms);
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-	}
-
-	public void message(String msg){
-		intfc.message(msg);
 	}
 
 	public static void main(String[] args){

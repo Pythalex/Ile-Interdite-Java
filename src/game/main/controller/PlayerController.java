@@ -7,15 +7,8 @@ import java.util.Scanner;
 
 public class PlayerController {
 
-    // The player ID, is used to identify the player when asking for action
-    public String ID;
-
     public PlayerController(){
-        this.ID = "undefined";
-    }
 
-    public PlayerController(String ID){
-        this.ID = ID;
     }
 
     // Contains the action given by pressing the GUI button
@@ -34,16 +27,5 @@ public class PlayerController {
             Game.sleep(10);
         }
         return actionBuffer.toLowerCase();
-    }
-
-    /**
-     * Asks the player to take an action via
-     * the command line.
-     * @return the action taken
-     */
-    public String commandLineAction(){
-        System.out.print("Player " + ID + ", your action : ");
-        Scanner scan = new Scanner(System.in);
-        return scan.next().toLowerCase();
     }
 }
