@@ -76,7 +76,7 @@ public class Case
 	}
 
 	/**
-	 * Dries the case up.
+	 * Dries the case.
 	 */
 	public void dry(){
 		state = State.dry;

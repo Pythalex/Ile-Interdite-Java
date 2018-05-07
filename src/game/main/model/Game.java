@@ -313,6 +313,40 @@ public class Game extends Observable
 		return true;
 	}
 
+	/**
+	 * Called when a player is on submerged case.
+	 * Assumes the player can leave the area.
+	 * @param p the player
+	 * @return Whether the player survived
+	 */
+	public void makePlayerLeaveSubmergedCase(Player p){
+
+		Pair<Integer, Integer> pos;
+
+		boolean valid = false;
+		while(!valid) {
+
+			// Ask for position and check if in the vicinity (neighbour or self)
+			pos = intfc.askPosition(p.chClass.toString());
+			int x = p.x - pos.getKey();
+			int y = p.y - pos.getValue();
+
+			double length = Math.sqrt(x * x + y * y);
+			if (length == 1) {
+				// if movable case
+				Case c = isle.getCase(pos.getKey(), pos.getValue());
+				if (!c.isSubmerged()) {
+					movePlayer(p, pos.getKey(), pos.getValue());
+					valid = true;
+				} else {
+					message("The case cannot be dried.");
+				}
+			} else {
+				message("The case is not in your neighbourhood (1 case).");
+			}
+		}
+	}
+
 	public void message(String msg){
 		intfc.message(msg);
 	}
@@ -359,6 +393,29 @@ public class Game extends Observable
 			// Set the case to artifact
 			isle.cases[pos.getValue() * isle.width + pos.getKey()].event = artifact;
 		}
+	}
+
+	/**
+	 * Indicates whether the given player can move on a neighbour
+	 * case. i.e. if at least of the adjacent cases is not submerged.
+	 * @param p the player
+	 * @return player can move
+	 */
+	public boolean playerCanMoveTowardNeighbourCases(Player p){
+		List<Case> cases = new ArrayList<>();
+		if (isle.playerCanMove(p.x, p.y - 1))
+			cases.add(isle.getCase(p.x, p.y - 1));
+		if (isle.playerCanMove(p.x, p.y + 1))
+			cases.add(isle.getCase(p.x, p.y + 1));
+		if (isle.playerCanMove(p.x - 1, p.y))
+			cases.add(isle.getCase(p.x - 1, p.y));
+		if (isle.playerCanMove(p.x + 1, p.y))
+			cases.add(isle.getCase(p.x + 1, p.y));
+		boolean hasAtLeastOneNeighbourFlooded = false;
+		for (Case neighbour: cases)
+			hasAtLeastOneNeighbourFlooded = hasAtLeastOneNeighbourFlooded || !neighbour.isSubmerged();
+
+		return hasAtLeastOneNeighbourFlooded;
 	}
 
 	/**
@@ -411,11 +468,21 @@ public class Game extends Observable
 
 				/* DEFEAT CHECKS */
 
-				// if one player is on a submerged case, he's dead and the game is finished
+				// if one player is on a submerged case
 				Player submergedPlayer = checkSubmergedPlayer();
-				if (submergedPlayer != null) {
-					end = true;
-					message(submergedPlayer.chClass + " drowned.");
+				while (submergedPlayer != null) {
+					// make him move if possible, else he dies
+					if (playerCanMoveTowardNeighbourCases(submergedPlayer)){
+						makePlayerLeaveSubmergedCase(submergedPlayer);
+					} else {
+						end = true;
+						message(submergedPlayer.chClass + " drowned, you lose.");
+						break;
+					}
+					// do it for the next submerged player if there is one
+					submergedPlayer = checkSubmergedPlayer();
+					// update graphics in case of multiple submerged players (can happen, really)
+					notifyObservers();
 				}
 
 				// If the helicopter is submerged, the game is finished

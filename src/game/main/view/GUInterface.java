@@ -390,6 +390,38 @@ public class GUInterface extends JPanel implements Observer{
         return pos;
     }
 
+    /**
+     * Same as askPosition() but display the given text before displayed default text
+     * @param text the text to display before instructions.
+     * @return a 2D coordinate
+     */
+    public Pair<Integer, Integer> askPosition(String text){
+        Pair<Integer, Integer> pos = new Pair<>(0, 0);
+        boolean valid = false;
+        while (!valid){
+            String position = null;
+            while (position == null) {
+                position = JOptionPane.showInputDialog(window,
+                        text + " : Give a position to go as x;y", null);
+            }
+            String[] coordinates = position.split(";");
+
+            // If given string is in the format x;y
+            if (coordinates.length == 2 && isInteger(coordinates[0]) &&
+                    isInteger(coordinates[1])){
+                valid = true;
+                pos = new Pair<>(Integer.parseInt(coordinates[0]),
+                        Integer.parseInt(coordinates[1]));
+            } else {
+                JOptionPane.showMessageDialog(window,
+                        "You have not given a correct position.",
+                        "Position format error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        return pos;
+    }
+
     public boolean isInteger(String s){
         Scanner sc = new Scanner(s.trim());
         return sc.hasNextInt();
