@@ -14,6 +14,10 @@
 
 ---
 
+## What does it look like ?
+
+Appearance since 5/8/2018 update (May the 5th)
+![game screenshot](https://i.gyazo.com/7b85960c731986e5bf5abca9d83c95da.png)
 
 
 ## Game conception
