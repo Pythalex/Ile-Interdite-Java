@@ -3,6 +3,8 @@ package game.main.model;
 
 import game.main.controller.PlayerController;
 
+import java.awt.image.BufferedImage;
+
 /**
  * Represents a player.
  */
@@ -35,13 +37,15 @@ public class Player
 	 *
 	 * @param master The master game instance
 	 */
-	public Player(Game master){
+	public Player(Game master, CharacterClasses chClass){
 		gameMaster = master;
 
 		artifact = new boolean[4];
 		keys = new boolean[4];
 
 		pc = new PlayerController();
+
+		this.chClass = chClass;
 	}
 
 	/**
@@ -60,6 +64,21 @@ public class Player
 			artifact[i] = false;
 			keys[i] = false;
 		}
+	}
+
+	/**
+	 * Returns the list of possessed keys as a string V-W-X-Y
+	 * where each letter is either replaced by a space if the key is not
+	 * possessed, or by the key letter.
+	 * @return V-W-X-Y
+	 */
+	public String keysToString(){
+		String result = "";
+		result += (keys[0] ? "W-" : " -");
+		result += (keys[1] ? "F-" : " -");
+		result += (keys[2] ? "E-" : " -");
+		result += (keys[3] ? "A"  : " " );
+		return result;
 	}
 
 }

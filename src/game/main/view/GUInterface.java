@@ -30,11 +30,19 @@ public class GUInterface extends JPanel implements Observer{
     private Color colorCaseFlood = new Color(125, 221, 215);
     private Color colorCaseSubmerged = new Color(0, 86, 114);
 
+    // event sprites
     private BufferedImage heliportSprite;
     private BufferedImage artifactWaterSprite;
     private BufferedImage artifactFireSprite;
     private BufferedImage artifactEarthSprite;
     private BufferedImage artifactAirSprite;
+
+    // players sprites
+    private BufferedImage defaultClassSprite;
+    private BufferedImage pilotClassSprite;
+    private BufferedImage engineerClassSprite;
+    private BufferedImage explorerClassSprite;
+    private BufferedImage diverClassSprite;
 
     // buttons
     private JButton upButton;
@@ -46,6 +54,7 @@ public class GUInterface extends JPanel implements Observer{
     private JButton rightButton;
     private JButton upRightButton;
     private JButton moveToButton;
+
     private JButton simpleDryButton;
     private JButton doubleDryButton;
     private JButton passButton;
@@ -59,6 +68,9 @@ public class GUInterface extends JPanel implements Observer{
         this.master = master;
 
         int size = 700;
+
+        // load sprites
+        loadResources();
 
         window = new JFrame("Ile Interdite");
 
@@ -287,8 +299,6 @@ public class GUInterface extends JPanel implements Observer{
                 repaint();
             }
         });
-
-        loadResources();
     }
 
     /// METHODS
@@ -531,13 +541,79 @@ public class GUInterface extends JPanel implements Observer{
 
 
         int pX, pY;
-        int margin = colWidth / 20;
+        int margin = colWidth / 15;
         for (Case c: isle.cases) {
 
             int i = 0;
 
             for (Player p : c.players) {
 
+                BufferedImage spriteToLoad;
+                switch (p.chClass){
+                    case Pilot:
+                        spriteToLoad = pilotClassSprite;
+                        break;
+                    case Engineer:
+                        spriteToLoad = engineerClassSprite;
+                        break;
+                    case Explorer:
+                        spriteToLoad = explorerClassSprite;
+                        break;
+                    case Diver:
+                        spriteToLoad = diverClassSprite;
+                        break;
+                    case Default:
+                    default:
+                        spriteToLoad = defaultClassSprite;
+                        break;
+                }
+
+                switch (master.getPlayerCase(p).players.size()){
+                    case 1:
+                        pX = p.x * colWidth + colWidth / 2 - spriteToLoad.getWidth() / 2;
+                        pY = p.y * rowWidth + rowWidth / 2 - spriteToLoad.getHeight() / 2;
+                        break;
+                    case 2:
+                        if (i == 0) {
+                            pX = p.x * colWidth + margin;
+                            pY = p.y * rowWidth + margin;
+                        } else {
+                            pX = p.x * colWidth + colWidth - spriteToLoad.getWidth() - margin;
+                            pY = p.y * rowWidth + rowWidth - spriteToLoad.getHeight() - margin;
+                        }
+                        break;
+                    case 3:
+                        if (i == 0) {
+                            pX = p.x * colWidth + margin;
+                            pY = p.y * rowWidth + margin;
+                        } else if (i == 1) {
+                            pX = p.x * colWidth + colWidth / 2 - spriteToLoad.getWidth() / 2;
+                            pY = p.y * rowWidth + rowWidth / 2 - spriteToLoad.getHeight() / 2;
+                        } else {
+                            pX = p.x * colWidth + colWidth - spriteToLoad.getWidth() - margin;
+                            pY = p.y * rowWidth + rowWidth - spriteToLoad.getHeight() - margin;
+                        }
+                        break;
+                    case 4:
+                    default:
+                        if (i == 0) {
+                            pX = p.x * colWidth + margin;
+                            pY = p.y * rowWidth + margin;
+                        } else if (i == 1) {
+                            pX = p.x * colWidth + margin;
+                            pY = p.y * rowWidth + rowWidth - spriteToLoad.getHeight() - margin;
+                        } else if (i == 2) {
+                            pX = p.x * colWidth + colWidth - spriteToLoad.getWidth() - margin;
+                            pY = p.y * rowWidth + margin;
+                        } else {
+                            pX = p.x * colWidth + colWidth - spriteToLoad.getWidth() - margin;
+                            pY = p.y * rowWidth + rowWidth - spriteToLoad.getHeight() - margin;
+                        }
+                        break;
+                }
+
+                /*
+                DICE PLACEMENT DISPLAY
                 switch (master.getPlayerCase(p).players.size()) {
                     case 1:
                         pX = p.x * colWidth + colWidth / 2;
@@ -581,8 +657,9 @@ public class GUInterface extends JPanel implements Observer{
                         }
                         break;
                 }
+                */
 
-                g.fillOval(pX - radius / 2, pY - radius / 2, radius, radius);
+                g.drawImage(spriteToLoad, pX, pY,null);
                 i++;
             }
         }
@@ -612,11 +689,18 @@ public class GUInterface extends JPanel implements Observer{
 
     public void loadResources(){
         String root = "resources" + File.separator;
+
         heliportSprite = loadImage(root + "heliport.png");
         artifactWaterSprite = loadImage(root + "artifactWater.png");
         artifactFireSprite = loadImage(root + "artifactFire.png");
         artifactEarthSprite = loadImage(root + "artifactEarth.png");
         artifactAirSprite = loadImage(root + "artifactAir.png");
+
+        defaultClassSprite = loadImage(root + "default.png");
+        pilotClassSprite = loadImage(root + "pilot.png");
+        engineerClassSprite = loadImage(root + "engineer.png");
+        explorerClassSprite = loadImage(root + "explorer.png");
+        diverClassSprite = loadImage(root + "diver.png");
     }
 
     public BufferedImage loadImage(String path){

@@ -67,7 +67,9 @@ public class Game extends Observable
 		char name = 'A';
 		for (int i = 0; i < nbOfPlayers; i++) {
 			// Create the player
-			players[i] = new Player(this);
+			CharacterClasses chClass = availableClasses.get(rdm.nextInt(availableClasses.size()));
+
+			players[i] = new Player(this, chClass);
 			name = (char)((int)name + 1);
 
 			// Place the player to the helicopter case
@@ -75,10 +77,8 @@ public class Game extends Observable
 			players[i].y = helicopCase.y;
 			helicopCase.players.add(players[i]);
 
-			// class assignment - Assign randomly from available classes
-			players[i].chClass = availableClasses.get(rdm.nextInt(availableClasses.size()));
 			// The class is no longer available
-			availableClasses.remove(players[i].chClass);
+			availableClasses.remove(chClass);
 		}
 		currentPlayer = players[0];
 
@@ -449,7 +449,7 @@ public class Game extends Observable
 				if (end)
 					break;
 
-				message( p.chClass + " has to play.");
+				message( p.chClass + " (keys : " + p.keysToString() + " ) has to play.");
 
 				// 3 actions at max
 				makeAction(p, 3);
@@ -774,7 +774,7 @@ public class Game extends Observable
 	public static void main(String[] args){
 		int width = 4;
 		int height = 4;
-		int players = 2;
+		int players = 4;
 
 		if (args.length == 4){
 			width = Integer.parseInt(args[1]);
