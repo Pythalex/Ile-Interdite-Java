@@ -27,7 +27,7 @@ Appearance since 5/8/2018 update (May the 5th)
 The game modules are designed in 4 main modules:
 
 
-[![Ile_Interdite-_UML.png](https://s14.postimg.cc/uhn5ko04h/Ile_Interdite-_UML.png)](https://postimg.cc/image/pizn64wbh/)
+![Ile_Interdite-_UML.png](https://image.ibb.co/mXaboy/UMLfinal.png)
 
 Game manages the game's rules and has references of the players and the isle.
 
