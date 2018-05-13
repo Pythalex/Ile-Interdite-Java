@@ -14,11 +14,6 @@
 
 ---
 
-## How to run ?
-
-Use the run.jar with your default .jar application or by command with
-> java -jar run.jar
-
 ## What does it look like ?
 
 Appearance since 5/8/2018 update (May the 5th)
